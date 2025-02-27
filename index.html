@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Halaman Login/Registrasi Praktek Mandiri drg. Danny Hanggono">
+    <title>drg. Danny Hanggono</title>
+    <link rel="icon" href="assets/gigi.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="form-box login">
+            <form id="loginForm" novalidate>
+                <h1>Praktek Mandiri drg. Danny H</h1>
+                <div class="input-box">
+                    <input type="text" id="username" name="username" autocomplete="username" required
+                        placeholder="Nama pengguna">
+                    <i class='bx bxs-user'></i>
+                </div>
+                <div class="input-box password-group">
+                    <input type="password" id="password" name="password" autocomplete="current-password" required
+                        placeholder="Kata sandi">
+                    <i class='bx bxs-lock-alt'></i>
+                </div>
+                <button type="submit" class="btn">Masuk</button>
+                <div id="errorMessage" class="error-message"></div>
+
+            </form>
+        </div>
+
+        <div class="form-box register">
+            <form id="registerForm" novalidate>
+                <h1>Pendaftaran</h1>
+                <div class="input-box">
+                    <input type="text" id="reg-username" name="username" required placeholder="Nama pengguna">
+                    <i class='bx bxs-user'></i>
+                </div>
+                <div class="input-box">
+                    <input type="whatsapp" placeholder="Nomor telepon" required>
+                    <i class='bx bx-phone' ></i>
+                </div>
+                <div class="input-box password-group">
+                    <input type="password" id="reg-password" name="password" required placeholder="Kata sandi">
+                    <i class='bx bxs-lock-alt'></i>
+                </div>
+                <button type="submit" class="btn">Daftar</button>
+                <div id="regErrorMessage" class="error-message"></div>
+            </form>
+        </div>
+
+        <div class="toggle-box">
+            <div class="toggle-panel toggle-left">
+                <h1>Selamat Datang</h1>
+                <p>Belum punya akun?</p>
+                <button class="btn register-btn" id="register-btn">Daftar</button>
+            </div>
+            <div class="toggle-panel toggle-right">
+                <h1>Silahkan Daftar!</h1>
+                <p>Sudah punya akun?</p>
+                <button class="btn login-btn" id="login-btn">Masuk</button>
+            </div>
+        </div>
+        <div class="footer-wrapper">
+            <footer class="footer">
+                <div class="footer-content">
+                    <p>&copy; Created by Rid The Wann</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <noscript>
+        <p class="noscript-warning">JavaScript is disabled. Some features may not work properly.</p>
+    </noscript>
+
+    <script src="js/index.js" defer></script>
+</body>
+
+</html>

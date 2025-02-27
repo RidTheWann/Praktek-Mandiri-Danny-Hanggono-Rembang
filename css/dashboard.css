@@ -1,0 +1,410 @@
+/* Reset dan Gaya Dasar */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+:root {
+    --sidebar-width: 250px;
+    --bg-color: #121212;
+    --container-bg: #1e1e1e;
+    --primary-color: #90caf9;
+    --primary-dark: #64b5f6;
+    --text-color: #fff;
+    --shadow-color: rgba(0, 0, 0, 0.7);
+    --sidebar-bg: #212121;
+    --table-header-bg: #333;
+    --table-border-color: #444;
+    --button-bg: #90caf9;
+    --button-hover-bg: #64b5f6;
+    --button-text-color: #121212;
+    --delete-button-bg: #f44336;
+    --delete-button-hover-bg: #d32f2f;
+    --navbar-bg: #212121;
+    --navbar-text-color: #fff;
+    --navbar-height: 60px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow-x: hidden;
+}
+
+/* Navbar */
+.navbar {
+    background: #1e1e1e;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 5px var(--shadow-color);
+  }
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    color: #90caf9;
+    font-weight: 600;
+    font-size: 1.4rem;
+  }
+  
+  .navbar-brand i {
+    margin-right: 0.5rem;
+    font-size: 1.6rem;
+  }
+  
+
+.back-button {
+    background-color: var(--button-bg);
+    color: var(--button-text-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
+
+.back-button:hover {
+    background-color: var(--button-hover-bg);
+}
+
+/* Sidebar */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg);
+    padding: 20px;
+    box-shadow: 2px 0 5px var(--shadow-color);
+    z-index: 1000;
+    transition: left 0.3s ease;
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    height: calc(100vh - var(--navbar-height));
+    overflow-y: auto;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar li {
+    margin-bottom: 5px;
+}
+
+.sidebar li a {
+    display: block;
+    padding: 12px 15px;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 8px;
+}
+
+.sidebar li a:hover,
+.sidebar li a.active {
+    background-color: var(--primary-color);
+    color: var(--container-bg);
+}
+
+.sidebar li a i {
+    margin-right: 15px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Konten Utama */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: hidden;
+    margin-top: var(--navbar-height);
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease, margin-top 0.3s ease;
+    width: calc(100% - var(--sidebar-width));
+}
+
+.chart-section,
+.table-section {
+    background-color: var(--container-bg);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    display: none;
+}
+
+.chart-section.active,
+.table-section.active {
+    display: block;
+}
+
+.chart-section {
+    height: 85vh;
+    overflow: hidden;
+}
+
+.chart-section canvas {
+    max-height: 100% !important;
+    width: 100% !important;
+}
+
+.main-content h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 8px;
+    font-size: 1.5em;
+}
+
+/* Styling Tabel */
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--container-bg);
+    border-radius: 12px;
+    margin-top: 15px;
+    border: 1px solid var(--table-border-color);
+}
+
+#tabelKunjungan {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+#tabelKunjungan th,
+#tabelKunjungan td {
+    padding: 12px 18px;
+    border: 1px solid var(--table-border-color);
+    text-align: left;
+    white-space: nowrap;
+}
+
+#tabelKunjungan th {
+    background-color: var(--table-header-bg);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+#tabelKunjungan td {
+    color: #ddd;
+}
+
+/* Tombol Hapus */
+#tabelKunjungan .delete-button {
+    background-color: var(--delete-button-bg);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#tabelKunjungan .delete-button:hover {
+    background-color: var(--delete-button-hover-bg);
+}
+
+.menu-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: var(--button-bg);
+    color: var(--button-text-color);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1002;
+    display: none;
+}
+
+/* Styling untuk input tanggal */
+#filter-tanggal {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 100px;
+    font-size: 16px;
+    margin-bottom: 10px;
+    margin-left: 10px;
+}
+
+#filter-tanggal:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(144, 202, 249, 0.5); /* Sesuaikan dengan primary-color */
+}
+
+/* Styling untuk ikon kalender - TANPA invert */
+#filter-tanggal::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    color: var(--text-color); /* Atur warna secara eksplisit */
+    /* Atau, jika Anda ingin ikonnya sedikit berbeda: */
+    /* color: #90caf9;  */
+}
+
+#filter-tanggal::-moz-calendar-picker-indicator {
+    cursor: pointer;
+    color: var(--text-color); /* Firefox */
+}
+
+/* Responsivitas Mobile */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 10px;
+    }
+
+    .menu-toggle {
+        display: block;
+        top: calc(var(--navbar-height) + 10px);
+        left: 10px;
+    }
+
+    .sidebar {
+        width: 70%;
+        left: -100%;
+        height: calc(100vh - var(--navbar-height));
+    }
+
+    .sidebar.open {
+        left: 0;
+    }
+
+    .main-content {
+        padding: 15px;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    /* Perbaikan Tabel Mobile */
+    .table-container {
+        border-radius: 8px;
+        overflow-x: scroll;
+    }
+
+    #tabelKunjungan {
+        min-width: 600px;
+    }
+
+    #tabelKunjungan th,
+    #tabelKunjungan td {
+        padding: 8px 12px;
+        font-size: 0.8em;
+    }
+
+    .table-section h2 {
+        font-size: 1.2em;
+    }
+
+    .chart-section {
+        height: 70vh;
+        padding: 15px;
+    }
+}
+
+/* ... (semua kode CSS sebelumnya) ... */
+
+/* --- Modal Styling --- */
+.modal-overlay {
+    position: fixed; /* Tetap di tempat, menutupi seluruh layar */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparan hitam */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* Di atas semua elemen lain */
+    display: none; /* Sembunyikan secara default */
+}
+
+.modal-content {
+    background-color: var(--container-bg);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    text-align: center;
+    max-width: 90%;  /* Batasi lebar */
+    width: 400px;   /* Lebar tetap */
+}
+
+.modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center; /* Pusatkan tombol */
+}
+
+.modal-buttons button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#confirmDelete {
+    background-color: var(--delete-button-bg);
+    color: white;
+}
+
+#confirmDelete:hover {
+    background-color: var(--delete-button-hover-bg);
+}
+
+#cancelDelete {
+    background-color: var(--button-bg);
+    color: var(--button-text-color);
+}
+
+#cancelDelete:hover {
+    background-color: var(--button-hover-bg);
+}
+
+#successModal {
+    position: fixed; /* Tetap di tempat, menutupi seluruh layar */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparan hitam */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* Di atas semua elemen lain */
+    display: none; /* Sembunyikan secara default */
+}
+
+.success-modal-content {
+     background-color: var(--container-bg); /* Sesuaikan */
+    /* Styling lain ... */
+}
+.success-icon {
+    color: green;
+    font-size: 3em;
+    margin-bottom: 10px;
+}
+#successOK {
+    background-color: green;
+    color: white;
+    /* Styling lain ... */
+}
+
+ #successOK:hover {
+   background-color: darkgreen; /*Warna hijau gelap saat hover */
+}

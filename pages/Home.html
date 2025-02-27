@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>drg. Danny Hanggono</title>
+    <meta name="description" content="Praktek Mandiri drg. Danny Hanggono - Dasbor dan Layanan">
+    <link rel="icon" href="../assets/gigi.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/Home.css">
+</head>
+
+<body>
+    <div class="page-wrapper">
+        <header>
+            <nav class="navbar">
+                <div class="navbar-brand">
+                    <i class="fa-solid fa-tooth logo-icon" aria-hidden="true"></i>
+                    <span>drg. Danny H</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="../index.html" class="nav-link" role="button" aria-label="Logout">
+                        <span>Keluar</span>
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                    </a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="container">
+            <div class="tab-panel">
+                <div class="tab-headers" id="tabHeaders" role="tablist"></div>
+
+                <div class="hero-slider" id="heroSlider">
+                    <!-- Slide Items -->
+                    <div class="slide active" data-href="data-harian.html" role="tabpanel">
+                        <div class="slide-image" aria-hidden="true"></div>
+                        <h2 class="card-title">Entry Harian</h2>
+                        <p class="card-description">Catat pasien dan tindakan hari ini.</p>
+                        <a href="data-harian.html" class="card-button">Buat Entry</a>
+                    </div>
+
+                    <div class="slide" data-href="dashboard.html" role="tabpanel">
+                        <div class="slide-image"></div>
+                        <h2 class="card-title">Dashboard</h2>
+                        <p class="card-description">Lihat rekap data pasien dan performa.</p>
+                        <a href="dashboard.html" class="card-button">Lihat Dashboard</a>
+                    </div>
+
+                    <div class="slide" data-href="https://docs.google.com/spreadsheets/d/1Ixd2BhZKvvPRu0XcngLK7jF_TrHcuVXSLcWyuiTsOLU/edit?gid=1700741156" role="tabpanel">
+                        <div class="slide-image"></div>
+                        <h2 class="card-title">Lihat Entry</h2>
+                        <p class="card-description">Akses data entry harian.</p>
+                        <a href="https://docs.google.com/spreadsheets/d/1Ixd2BhZKvvPRu0XcngLK7jF_TrHcuVXSLcWyuiTsOLU/edit?gid=1700741156" class="card-button">Lihat Data</a>
+                    </div>
+
+                    <div class="slide" data-href="lokasi.html" role="tabpanel">
+                        <div class="slide-image"></div>
+                        <h2 class="card-title">Lokasi Praktek</h2>
+                        <p class="card-description">Temukan lokasi praktek drg. Danny.</p>
+                        <a href="Link.html" class="card-button">Lihat Peta</a>
+                    </div>
+
+                    <div class="slide" data-href="profil.html" role="tabpanel">
+                        <div class="slide-image"></div>
+                        <h2 class="card-title">Profil</h2>
+                        <p class="card-description">Informasi tentang drg. Danny.</p>
+                        <a href="profil.html" class="card-button">Lihat Profil</a>
+                    </div>
+
+                    <div class="slider-dots" id="sliderDots"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Praktek Mandiri drg. Danny Hanggono</p>
+        </footer>
+    </div>
+
+    <script src="/js/Home.js"></script>
+</body>
+</html>

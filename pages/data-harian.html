@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Data Harian drg. Danny Hanggono - Catatan kunjungan pasien">
+  <title>drg. Danny Hanggono</title>
+  <link rel="icon" href="../assets/gigi.png" type="image/png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="../css/data-harian.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,600&display=swap">
+  <script defer src="https://use.fontawesome.com/releases/v5.15.4/js/all.js"></script>
+</head>
+<body>
+  <main class="container-card">
+    <h1 class="title">
+      <i class="fas fa-tooth" aria-hidden="true"></i> drg. Danny H - Data Harian
+    </h1>
+    <form id="dataForm" method="POST" novalidate>
+      <div class="field">
+        <label class="label" for="tanggal-kunjungan">Tanggal Kunjungan</label>
+        <div class="control">
+          <input class="input" type="date" name="tanggalKunjungan" id="tanggal-kunjungan" required autocomplete="on">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="nama-pasien">Nama Pasien</label>
+        <div class="control">
+          <input class="input" type="text" name="namaPasien" id="nama-pasien" placeholder="Masukkan Nama Pasien" required autocomplete="name">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="no-rm">No. RM</label>
+        <div class="control">
+          <input class="input" type="text" name="noRM" id="no-rm" placeholder="Masukkan Nomor RM" required autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="kelamin">Kelamin</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="kelamin" id="kelamin" required>
+              <option value="">Pilih Kelamin</option>
+              <option value="Laki-Laki">Laki - Laki</option>
+              <option value="Perempuan">Perempuan</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="biaya">Biaya</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select name="biaya" id="biaya" required>
+              <option value="">Pilih Biaya</option>
+              <option value="BPJS">BPJS</option>
+              <option value="UMUM">UMUM</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <fieldset class="field">
+        <legend class="label">Tindakan</legend>
+        <div class="checkbox-group">
+          <div>
+            <input type="checkbox" id="obat" name="tindakan[]" value="Obat">
+            <label for="obat">Obat</label>
+          </div>
+          <div>
+            <input type="checkbox" id="cabut-anak" name="tindakan[]" value="Cabut Anak">
+            <label for="cabut-anak">Cabut anak</label>
+          </div>
+          <div>
+            <input type="checkbox" id="cabut-dewasa" name="tindakan[]" value="Cabut Dewasa">
+            <label for="cabut-dewasa">Cabut dewasa</label>
+          </div>
+          <div>
+            <input type="checkbox" id="tambal-sementara" name="tindakan[]" value="Tambal Sementara">
+            <label for="tambal-sementara">Tambal Sementara</label>
+          </div>
+          <div>
+            <input type="checkbox" id="tambal-tetap" name="tindakan[]" value="Tambal Tetap">
+            <label for="tambal-tetap">Tambal Tetap</label>
+          </div>
+          <div>
+            <input type="checkbox" id="scaling" name="tindakan[]" value="Scaling">
+            <label for="scaling">Scaling</label>
+          </div>
+          <div>
+            <input type="checkbox" id="rujuk" name="tindakan[]" value="Rujuk">
+            <label for="rujuk">Rujuk</label>
+          </div>
+        </div>
+      </fieldset>
+      <div class="field">
+        <label class="label" for="lainnya">Lainnya</label>
+        <div class="control">
+          <input class="input" type="text" name="lainnya" id="lainnya" placeholder="Tindakan Lainnya">
+        </div>
+      </div>
+      <div class="field is-grouped">
+        <div class="control">
+          <button class="button is-primary" type="submit" id="submit-button">Kirim Data</button>
+        </div>
+        <div class="control">
+          <button class="button is-danger" type="button" id="cancel-button">Kembali</button>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <div id="blur-overlay" aria-hidden="true"></div>
+  <p id="message" class="status-message" role="alert" aria-live="assertive"></p>
+
+  <script src="../js/data-harian.js" defer></script>
+</body>
+</html>
