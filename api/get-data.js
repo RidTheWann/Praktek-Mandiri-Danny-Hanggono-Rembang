@@ -53,17 +53,17 @@ export default async function handler(req, res) {
                 if (monthNames.includes(sheetName)) {
                     sheetNamesToFetch = [sheetName];
                 } else {
-                  return res.status(400).json({ status: 'error', message: 'Nama sheet tidak valid. Harus nama bulan.' });
+                    return res.status(400).json({ status: 'error', message: 'Nama sheet tidak valid. Harus nama bulan.' });
                 }
             } else {
                 // Get sheet names from spreadsheet metadata
                 const spreadsheetMeta = await sheets.spreadsheets.get({
                     spreadsheetId,
                 });
-              // *Filter* the sheet names to include only those that are month names.
-              sheetNamesToFetch = spreadsheetMeta.data.sheets
-              .map(sheet => sheet.properties.title)
-              .filter(title => monthNames.includes(title)); //  Filter here!
+                // *Filter* the sheet names to include only those that are month names.
+                sheetNamesToFetch = spreadsheetMeta.data.sheets
+                    .map(sheet => sheet.properties.title)
+                    .filter(title => monthNames.includes(title)); //  Filter here!
 
             }
 
@@ -85,37 +85,37 @@ export default async function handler(req, res) {
                     continue;
                 }
 
-            // --- Data Transformation ---
-            const headers = values[0];
-            let sheetData = values.slice(1).map((row) => {
-                const rowData = {};
+                // --- Data Transformation ---
+                const headers = values[0];
+                let sheetData = values.slice(1).map((row) => {
+                    const rowData = {};
 
-                // Handle main fields (Tanggal Kunjungan, No. Antrean, Nama Pasien, No.RM, Kelamin, Biaya)
-                rowData["Tanggal Kunjungan"] = row[0] || "";
-                rowData["No.Antrean"] = row[1] || "";
-                rowData["Nama Pasien"] = row[2] || "";
-                rowData["No.RM"] = row[3] || "";
-                rowData["Kelamin"] = row[4] || "";
-                rowData["Biaya"] = row[5] || "";
+                    // Handle main fields (Tanggal Kunjungan, No. Antrean, Nama Pasien, No.RM, Kelamin, Biaya)
+                    rowData["Tanggal Kunjungan"] = row[0] || "";
+                    rowData["No.Antrean"] = row[1] || "";
+                    rowData["Nama Pasien"] = row[2] || "";
+                    rowData["No.RM"] = row[3] || "";
+                    rowData["Kelamin"] = row[4] || "";
+                    rowData["Biaya"] = row[5] || "";
 
 
-                // --- Tindakan (Concatenate) ---
-                const tindakanArray = [];
-                const tindakanHeaders = ["Obat", "Cabut anak", "Cabut dewasa", "Tambal Sementara", "Tambal Tetap", "Scaling", "Rujuk"];
-                for (let i = 6; i < 13; i++) { // Columns G (index 6) to M (index 12)
-                    if (row[i]) { // If the cell is not empty
-                        tindakanArray.push(headers[i]); // Add the *header* (action name)
+                    // --- Tindakan (Concatenate) ---
+                    const tindakanArray = [];
+                    const tindakanHeaders = ["Obat", "Cabut anak", "Cabut dewasa", "Tambal Sementara", "Tambal Tetap", "Scaling", "Rujuk"];
+                    for (let i = 6; i < 13; i++) { // Columns G (index 6) to M (index 12)
+                        if (row[i]) { // If the cell is not empty
+                            tindakanArray.push(headers[i]); // Add the *header* (action name)
+                        }
                     }
-                }
-                rowData["Tindakan"] = tindakanArray.join(", "); // Join with comma and space
+                    rowData["Tindakan"] = tindakanArray.join(", "); // Join with comma and space
 
-                rowData["Lainnya"] = row[13] || ""; // Column N (index 13)
+                    rowData["Lainnya"] = row[13] || ""; // Column N (index 13)
 
-                // Create a unique _id.  Using No.RM + random string to ensure uniqueness.
-                rowData._id = (rowData["No.RM"] || "NoRM") + "-" + Math.random().toString(36).substring(2, 15);
+                    // Create a unique _id.  Using No.RM + random string to ensure uniqueness.
+                    rowData._id = (rowData["No.RM"] || "NoRM") + "-" + Math.random().toString(36).substring(2, 15);
 
-                return rowData;
-            });
+                    return rowData;
+                });
                 // Add sheet name (optional, but useful)
                 sheetData.forEach(item => item.sheetName = currentSheetName);
                 allData = allData.concat(sheetData);

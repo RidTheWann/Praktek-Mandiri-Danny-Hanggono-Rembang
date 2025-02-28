@@ -49,7 +49,7 @@ body {
     width: 100%;
     z-index: 1000;
     box-shadow: 0 2px 5px var(--shadow-color);
-  }
+}
 
 .navbar-brand {
     display: flex;
@@ -57,13 +57,13 @@ body {
     color: #90caf9;
     font-weight: 600;
     font-size: 1.4rem;
-  }
-  
-  .navbar-brand i {
+}
+
+.navbar-brand i {
     margin-right: 0.5rem;
     font-size: 1.6rem;
-  }
-  
+}
+
 
 .back-button {
     background-color: var(--button-bg);
@@ -244,20 +244,23 @@ body {
 #filter-tanggal:focus {
     border-color: var(--primary-color);
     outline: none;
-    box-shadow: 0 0 5px rgba(144, 202, 249, 0.5); /* Sesuaikan dengan primary-color */
+    box-shadow: 0 0 5px rgba(144, 202, 249, 0.5);
+    /* Sesuaikan dengan primary-color */
 }
 
 /* Styling untuk ikon kalender - TANPA invert */
 #filter-tanggal::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    color: var(--text-color); /* Atur warna secara eksplisit */
+    color: var(--text-color);
+    /* Atur warna secara eksplisit */
     /* Atau, jika Anda ingin ikonnya sedikit berbeda: */
     /* color: #90caf9;  */
 }
 
 #filter-tanggal::-moz-calendar-picker-indicator {
     cursor: pointer;
-    color: var(--text-color); /* Firefox */
+    color: var(--text-color);
+    /* Firefox */
 }
 
 /* Responsivitas Mobile */
@@ -318,17 +321,21 @@ body {
 
 /* --- Modal Styling --- */
 .modal-overlay {
-    position: fixed; /* Tetap di tempat, menutupi seluruh layar */
+    position: fixed;
+    /* Tetap di tempat, menutupi seluruh layar */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparan hitam */
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Semi-transparan hitam */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000; /* Di atas semua elemen lain */
-    display: none; /* Sembunyikan secara default */
+    z-index: 2000;
+    /* Di atas semua elemen lain */
+    display: none;
+    /* Sembunyikan secara default */
 }
 
 .modal-content {
@@ -337,14 +344,17 @@ body {
     border-radius: 12px;
     box-shadow: 0 4px 8px var(--shadow-color);
     text-align: center;
-    max-width: 90%;  /* Batasi lebar */
-    width: 400px;   /* Lebar tetap */
+    max-width: 90%;
+    /* Batasi lebar */
+    width: 400px;
+    /* Lebar tetap */
 }
 
 .modal-buttons {
     margin-top: 20px;
     display: flex;
-    justify-content: center; /* Pusatkan tombol */
+    justify-content: center;
+    /* Pusatkan tombol */
 }
 
 .modal-buttons button {
@@ -377,34 +387,42 @@ body {
 }
 
 #successModal {
-    position: fixed; /* Tetap di tempat, menutupi seluruh layar */
+    position: fixed;
+    /* Tetap di tempat, menutupi seluruh layar */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparan hitam */
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Semi-transparan hitam */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000; /* Di atas semua elemen lain */
-    display: none; /* Sembunyikan secara default */
+    z-index: 2000;
+    /* Di atas semua elemen lain */
+    display: none;
+    /* Sembunyikan secara default */
 }
 
 .success-modal-content {
-     background-color: var(--container-bg); /* Sesuaikan */
+    background-color: var(--container-bg);
+    /* Sesuaikan */
     /* Styling lain ... */
 }
+
 .success-icon {
     color: green;
     font-size: 3em;
     margin-bottom: 10px;
 }
+
 #successOK {
     background-color: green;
     color: white;
     /* Styling lain ... */
 }
 
- #successOK:hover {
-   background-color: darkgreen; /*Warna hijau gelap saat hover */
+#successOK:hover {
+    background-color: darkgreen;
+    /*Warna hijau gelap saat hover */
 }

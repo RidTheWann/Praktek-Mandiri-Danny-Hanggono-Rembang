@@ -4,6 +4,6 @@ AOS.init({
 });
 
 // Tombol kembali ke halaman sebelumnya
-document.getElementById('backBtn').addEventListener('click', function() {
+document.getElementById('backBtn').addEventListener('click', function () {
     window.history.back();
 });

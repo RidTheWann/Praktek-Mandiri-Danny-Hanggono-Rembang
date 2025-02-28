@@ -63,17 +63,21 @@ body {
   text-decoration: none;
   padding: 0.5rem 1rem;
   transition: all 0.3s ease;
-  border-radius: 25px; /* Tambahkan border radius */
+  border-radius: 25px;
+  /* Tambahkan border radius */
 }
 
 .nav-menu .nav-link {
-  background: rgba(144, 202, 249, 0.1); /* Warna background transparan */
-  border: 1px solid #90caf9; /* Border sesuai warna aksen */
+  background: rgba(144, 202, 249, 0.1);
+  /* Warna background transparan */
+  border: 1px solid #90caf9;
+  /* Border sesuai warna aksen */
   margin-left: 0.5rem;
 }
 
 .nav-menu .nav-link:hover {
-  background: #90caf9; /* Warna saat hover */
+  background: #90caf9;
+  /* Warna saat hover */
   color: #121212;
   box-shadow: 0 2px 8px rgba(144, 202, 249, 0.3);
 }
@@ -215,7 +219,7 @@ body {
 .dot {
   width: 10px;
   height: 10px;
-  background: rgba(255,255,255,0.4);
+  background: rgba(255, 255, 255, 0.4);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -237,6 +241,7 @@ footer {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -248,7 +253,7 @@ footer {
   .slider-dots {
     display: none;
   }
-  
+
   .container {
     min-height: calc(100vh - 60px);
     padding: 0 0.5rem 20px;
