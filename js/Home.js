@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const slides = document.querySelectorAll(".slide");
     const tabHeadersContainer = document.getElementById("tabHeaders");
     const sliderDotsContainer = document.getElementById("sliderDots");
@@ -10,22 +10,24 @@ document.addEventListener("DOMContentLoaded", function() {
     // Generate tab headers and dots
     slides.forEach((slide, index) => {
         const title = slide.querySelector(".card-title").textContent;
-        
+
         const tabHeader = document.createElement("button");
         tabHeader.className = "tab-header";
         tabHeader.textContent = title;
         tabHeader.dataset.index = index;
+        // KEMBALIKAN event listener ini:
         tabHeader.addEventListener("click", () => !isTransitioning && showSlide(index));
         tabHeadersContainer.appendChild(tabHeader);
 
         const dot = document.createElement("span");
         dot.className = "dot";
         dot.dataset.index = index;
+        // KEMBALIKAN event listener ini:
         dot.addEventListener("click", () => !isTransitioning && showSlide(index));
         sliderDotsContainer.appendChild(dot);
     });
 
-    // Slide control functions
+    // ... (fungsi showSlide, nextSlide, startAutoSlide - TIDAK BERUBAH) ...
     function showSlide(index) {
         if (isTransitioning) {
             cancelAnimationFrame(transitionController);
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         isTransitioning = true;
         clearInterval(autoSlideInterval);
-        
+
         const newIndex = index >= slides.length ? 0 : index < 0 ? slides.length - 1 : index;
         currentIndex = newIndex;
 
@@ -64,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function() {
         };
 
         slides[currentIndex].addEventListener('transitionend', completeTransition);
-        
+
         // Fallback system
         transitionController = requestAnimationFrame(() => {
             if (isTransitioning) {
@@ -83,16 +85,15 @@ document.addEventListener("DOMContentLoaded", function() {
         clearInterval(autoSlideInterval);
         autoSlideInterval = setInterval(nextSlide, 5000);
     }
-
     // Initial setup
     showSlide(0);
 
-    // Handle slide click
-    slides.forEach(slide => {
-        slide.addEventListener("click", function() {
-            if(!isTransitioning && this.classList.contains("active") && this.dataset.href) {
-                window.location.href = this.dataset.href;
-            }
-        });
-    });
+    // --- Hapus atau komentari kode ini ---
+    // slides.forEach(slide => {
+    //     slide.addEventListener("click", function() {
+    //         if(!isTransitioning && this.classList.contains("active") && this.dataset.href) {
+    //             window.location.href = this.dataset.href;
+    //         }
+    //     });
+    // });
 });
