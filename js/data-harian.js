@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(sheetsData.message || "Gagal mengirim data ke Google Sheets.");
       }
       // --- Pengiriman ke Server Lokal (Tambahan) ---
-      const serverResponse = await fetch("/submit-data", {  // Endpoint di server
+      const serverResponse = await fetch("/api/submit-data", {  // Endpoint di server
         method: "POST",
         headers: { "Content-Type": "application/json" }, // Penting: Kirim sebagai JSON
         body: JSON.stringify(mappedFormObject), // Ubah data ke format JSON

@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmButton.onclick = async () => {
             try {
                 // Kirim request DELETE ke server, sertakan _id di URL
-                const response = await fetch(`/delete-data?index=${idToDelete}`, {
+                const response = await fetch(`/api/delete-data?index=${idToDelete}`, {
                     method: 'DELETE',
                 });
 
@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // MODIFIKASI fetchData: Tambahkan parameter tanggal
     async function fetchData(date = null) { // Default: null (ambil semua)
         try {
-            let url = '/get-data'; // URL dasar
+            let url = '/api/get-data';
             if (date) {
                 url += `?tanggal=${date}`; // Tambahkan query parameter jika ada tanggal
             }
