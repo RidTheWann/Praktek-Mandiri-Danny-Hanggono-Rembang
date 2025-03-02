@@ -1,7 +1,16 @@
 {
-    "rewrites": [
-      { "source": "/get-data(.*)", "destination": "/api/get-data" },
-      { "source": "/submit-data(.*)", "destination": "/api/submit-data" },
-      { "source": "/delete-data(.*)", "destination": "/api/delete-data" }
-    ]
-  }
+  "rewrites": [
+    {
+      "source": "/get-data(.*)",
+      "destination": "/api/get-data"
+    },
+    {
+      "source": "/submit-data(.*)",
+      "destination": "/api/submit-data"
+    },
+    {
+      "source": "/delete-data(.*)",
+      "destination": "/api/delete-data"
+    }
+  ]
+}
