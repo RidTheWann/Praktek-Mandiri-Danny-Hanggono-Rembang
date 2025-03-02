@@ -1,31 +1,31 @@
 'use strict';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Fungsi untuk toggle visibilitas password ---
-    function setupPasswordToggle(toggleButtonId, passwordInputId) {
-        const togglePassword = document.getElementById(toggleButtonId);
-        if (togglePassword) {
-            togglePassword.addEventListener('click', () => {
-                const passwordInput = document.getElementById(passwordInputId);
-                if (passwordInput) {
-                    const isPassword = passwordInput.type === 'password';
-                    passwordInput.type = isPassword ? 'text' : 'password';
-                    // Perbarui ikon (Font Awesome)
-                    togglePassword.innerHTML = isPassword
-                        ? '<i class="fas fa-eye-slash"></i>'
-                        : '<i class="fas fa-eye"></i>';
-                }
-            });
+// --- Fungsi untuk toggle visibilitas password ---
+  function setupPasswordToggle(toggleButtonId, passwordInputId) {
+    const togglePassword = document.getElementById(toggleButtonId);
+    if (togglePassword) {
+      togglePassword.addEventListener('click', () => {
+        const passwordInput = document.getElementById(passwordInputId);
+        if (passwordInput) {
+          const isPassword = passwordInput.type === 'password';
+          passwordInput.type = isPassword ? 'text' : 'password';
+          // Perbarui ikon (Font Awesome)
+          togglePassword.innerHTML = isPassword
+            ? '<i class="fas fa-eye-slash"></i>'
+            : '<i class="fas fa-eye"></i>';
         }
+      });
     }
+  }
 
-    // --- Toggle visibilitas password (Login) ---
-    setupPasswordToggle('togglePassword', 'password');
+  // --- Toggle visibilitas password (Login) ---
+  setupPasswordToggle('togglePassword', 'password');
 
-    // --- Toggle visibilitas password (Register) ---
-    setupPasswordToggle('toggleRegPassword', 'reg-password');
+  // --- Toggle visibilitas password (Register) ---
+  setupPasswordToggle('toggleRegPassword', 'reg-password');
 
-    // --- Animasi Ganti Form ---
+  // --- Animasi Ganti Form ---
     const container = document.querySelector('.container');
     const registerBtn = document.getElementById('register-btn');
     const loginBtn = document.getElementById('login-btn');
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // ---  GANTI DENGAN AUTENTIKASI KE SERVER ---
+               // ---  GANTI DENGAN AUTENTIKASI KE SERVER ---
                 const validUsername = "user"; // Contoh - GANTI!
                 const validPassword = "user"; // Contoh - GANTI!
 
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ---  Handling Submit Form Registrasi (Contoh Sederhana) ---
+     // ---  Handling Submit Form Registrasi (Contoh Sederhana) ---
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', (e) => {
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // ---  GANTI DENGAN PENYIMPANAN KE DATABASE ---
+               // ---  GANTI DENGAN PENYIMPANAN KE DATABASE ---
                 //  Kirim data ke server (backend) Anda.  Contoh di bawah ini HANYA alert.
                 alert(`Registrasi berhasil!\nUsername: ${username}\nEmail: ${email}`);
 

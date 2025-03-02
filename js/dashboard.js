@@ -272,19 +272,19 @@ document.addEventListener('DOMContentLoaded', () => {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Laki-laki',
-                    data: dataLaki,
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Perempuan',
-                    data: dataPerempuan,
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }
+                        label: 'Laki-laki',
+                        data: dataLaki,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Perempuan',
+                        data: dataPerempuan,
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
                 ]
             },
             options: {
@@ -305,19 +305,19 @@ document.addEventListener('DOMContentLoaded', () => {
             data: {
                 labels: labels, // Bulan dan tahun, misalnya "2024-07", "2024-08"
                 datasets: [{
-                    label: 'BPJS',
-                    data: dataBPJS,
-                    backgroundColor: 'rgba(75, 192, 192, 0.7)', // Warna untuk BPJS
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Umum',
-                    data: dataUmum,
-                    backgroundColor: 'rgba(255, 206, 86, 0.7)', // Warna untuk Umum
-                    borderColor: 'rgba(255, 206, 86, 1)',
-                    borderWidth: 1
-                }
+                        label: 'BPJS',
+                        data: dataBPJS,
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)', // Warna untuk BPJS
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Umum',
+                        data: dataUmum,
+                        backgroundColor: 'rgba(255, 206, 86, 0.7)', // Warna untuk Umum
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    }
                 ]
             },
             options: {
@@ -459,35 +459,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Tampilkan pesan sukses di modal yang sama
-                modalMessage.textContent = 'Data berhasil dihapus.';
-                confirmButton.style.display = 'none'; // Sembunyikan tombol "Ya"
-                cancelButton.textContent = 'OK';     // Ubah teks tombol "Batal" menjadi "OK"
-                cancelButton.onclick = () => {  //ganti fungsi tombol cancel
-                    modal.style.display = 'none'; // Sembunyikan modal
-                    // Kembalikan tombol dan pesan ke semula jika modal digunakan lagi
-                    confirmButton.style.display = 'inline-block'; // Tampilkan kembali
-                    cancelButton.textContent = 'Batal';
-                    modalMessage.textContent = 'Apakah Anda yakin ingin menghapus data ini?';
-                };
+             modalMessage.textContent = 'Data berhasil dihapus.';
+             confirmButton.style.display = 'none'; // Sembunyikan tombol "Ya"
+             cancelButton.textContent = 'OK';     // Ubah teks tombol "Batal" menjadi "OK"
+              cancelButton.onclick = () => {  //ganti fungsi tombol cancel
+                  modal.style.display = 'none'; // Sembunyikan modal
+                   // Kembalikan tombol dan pesan ke semula jika modal digunakan lagi
+                   confirmButton.style.display = 'inline-block'; // Tampilkan kembali
+                   cancelButton.textContent = 'Batal';
+                   modalMessage.textContent = 'Apakah Anda yakin ingin menghapus data ini?';
+             };
 
-            } catch (error) {
-                // ... (kode penanganan error) ...
-                // Tampilkan pesan error di modal (opsional)
-                modalMessage.textContent = `Gagal menghapus data: ${error.message}`;
-                confirmButton.style.display = 'none'; // Sembunyikan tombol konfirmasi
-                cancelButton.textContent = "OK"; // Ubah tombol "Batal" menjadi "OK"
-                cancelButton.onclick = () => {
-                    modal.style.display = 'none';
-                    confirmButton.style.display = 'inline-block';
-                    cancelButton.textContent = 'Batal';
-                    modalMessage.textContent = 'Apakah Anda yakin ingin menghapus data ini?';
-                }
-
-
-            } finally {
-                // modal.style.display = 'none'; // Hapus ini dari finally
+         } catch (error) {
+             // ... (kode penanganan error) ...
+             // Tampilkan pesan error di modal (opsional)
+            modalMessage.textContent = `Gagal menghapus data: ${error.message}`;
+            confirmButton.style.display = 'none'; // Sembunyikan tombol konfirmasi
+            cancelButton.textContent = "OK"; // Ubah tombol "Batal" menjadi "OK"
+            cancelButton.onclick = () => {
+                modal.style.display = 'none';
+                 confirmButton.style.display = 'inline-block';
+                 cancelButton.textContent = 'Batal';
+                 modalMessage.textContent = 'Apakah Anda yakin ingin menghapus data ini?';
             }
-        };
+
+
+         } finally {
+             // modal.style.display = 'none'; // Hapus ini dari finally
+         }
+     };
 
         // Event listener untuk tombol batal di dalam modal
         cancelButton.onclick = () => {

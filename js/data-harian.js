@@ -74,47 +74,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
     showMessage("Mengirim data", "loading");
 
-    try {
-      // --- Pengiriman ke Google Sheets (seperti sebelumnya) ---
-      const sheetsResponse = await fetch(
-        "https://script.google.com/macros/s/AKfycbyAS1Cc5e5hV6QMk2o8MI2VCxEY6KtzohoIc5EyrM3bFnFD31HHTTqgrDAJgA2M-Umr/exec",
-        {
-          method: "POST",
-          body: new URLSearchParams(mappedFormObject),
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        }
-      );
-      const sheetsData = await sheetsResponse.json();
-      if (sheetsData.result !== "success") {
-        throw new Error(sheetsData.message || "Gagal mengirim data ke Google Sheets.");
-      }
-      // --- Pengiriman ke Server Lokal (Tambahan) ---
-      const serverResponse = await fetch("/api/submit-data", {  // Endpoint di server
+  try {
+    // --- Pengiriman ke Google Sheets (seperti sebelumnya) ---
+    const sheetsResponse = await fetch(
+      "https://script.google.com/macros/s/AKfycbyAS1Cc5e5hV6QMk2o8MI2VCxEY6KtzohoIc5EyrM3bFnFD31HHTTqgrDAJgA2M-Umr/exec",
+      {
         method: "POST",
-        headers: { "Content-Type": "application/json" }, // Penting: Kirim sebagai JSON
-        body: JSON.stringify(mappedFormObject), // Ubah data ke format JSON
-      });
-
-      if (!serverResponse.ok) { // Cek status response dari server lokal
-        throw new Error(`Error from server: ${serverResponse.status} ${serverResponse.statusText}`);
+        body: new URLSearchParams(mappedFormObject),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
       }
+    );
+    const sheetsData = await sheetsResponse.json();
+    if (sheetsData.result !== "success") {
+      throw new Error(sheetsData.message || "Gagal mengirim data ke Google Sheets.");
+    }
+    // --- Pengiriman ke Server Lokal (Tambahan) ---
+    const serverResponse = await fetch("/api/submit-data", {  // Endpoint di server
+      method: "POST",
+      headers: { "Content-Type": "application/json" }, // Penting: Kirim sebagai JSON
+      body: JSON.stringify(mappedFormObject), // Ubah data ke format JSON
+    });
 
-      const serverData = await serverResponse.json(); // Parse response dari server
-      if (serverData.status !== 'success') {   //sesuaikan kondisi logic
+    if (!serverResponse.ok) { // Cek status response dari server lokal
+      throw new Error(`Error from server: ${serverResponse.status} ${serverResponse.statusText}`);
+    }
+
+    const serverData = await serverResponse.json(); // Parse response dari server
+      if (serverData.status !== 'success'){   //sesuaikan kondisi logic
         throw new Error(serverData.message || "Gagal memproses data di server");
       }
 
 
-      // --- Jika kedua pengiriman berhasil ---
-      showMessage("Data berhasil dikirim!", "success");
-      dataForm.reset();
-      setToday();
+    // --- Jika kedua pengiriman berhasil ---
+    showMessage("Data berhasil dikirim!", "success");
+    dataForm.reset();
+    setToday();
 
-    } catch (error) {
-      console.error(error);
-      showMessage(error.message, "error");  //tampilkan pesan dari error yang ditangkap
+  } catch (error) {
+    console.error(error);
+    showMessage(error.message, "error");  //tampilkan pesan dari error yang ditangkap
 
-    } finally {
+  } finally {
       setTimeout(() => {
         submitBtn.innerHTML = "Kirim Data";
         submitBtn.disabled = false;
