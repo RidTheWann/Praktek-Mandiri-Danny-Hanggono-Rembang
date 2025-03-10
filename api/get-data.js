@@ -14,7 +14,8 @@ if (!spreadsheetId) {
 const client = new MongoClient(mongodbUri);
 
 /**
- * Fungsi untuk mengambil data dari SEMUA sheet (tab) di dalam satu spreadsheet.
+ * Fungsi untuk mengambil data dari SEMUA sheet (tab) di dalam satu spreadsheet,
+ * lalu menggabungkan kolom-kolom tindakan (jika perlu) dan melewati baris kosong.
  */
 async function getAllSheetsData(queryParams) {
   try {
@@ -29,17 +30,17 @@ async function getAllSheetsData(queryParams) {
     const metadata = await sheetsApi.spreadsheets.get({
       spreadsheetId,
     });
-    // sheetNames akan berisi array nama sheet, misalnya ["Januari 2025", "Februari 2025", "Maret 2025", ...]
-    const sheetNames = metadata.data.sheets.map(s => s.properties.title);
+    const sheetNames = metadata.data.sheets.map(s => s.properties.title); // array nama sheet
 
     let allData = [];
 
-    // 2. Iterasi setiap sheet untuk mengambil data
+    // 2. Iterasi setiap sheet
     for (const sheetName of sheetNames) {
       try {
-        // Contoh range: 'Januari 2025!A1:N'
+        // Ubah A1:N sesuai jumlah kolom di Google Sheets Anda
         // Gunakan tanda kutip tunggal jika ada spasi di nama sheet
-        const range = `'${sheetName}'!A1:N`; 
+        const range = `'${sheetName}'!A1:N`;
+
         const result = await sheetsApi.spreadsheets.values.get({
           spreadsheetId,
           range,
@@ -51,7 +52,7 @@ async function getAllSheetsData(queryParams) {
           continue;
         }
 
-        // Baris pertama dianggap sebagai header
+        // Baris pertama dianggap header
         const header = rows[0];
         let data = rows.slice(1).map((row) => {
           const obj = {};
@@ -61,11 +62,45 @@ async function getAllSheetsData(queryParams) {
           return obj;
         });
 
+        // (1) Skip baris yang Tanggal Kunjungannya kosong agar tidak muncul baris "-" di tabel
+        data = data.filter(obj => obj["Tanggal Kunjungan"]);
+
+        // (2) Jika Anda menyimpan kolom tindakan terpisah, misalnya "Obat", "Cabut Anak", "Scaling", dsb.
+        //     Gabungkan jadi satu field "Tindakan".
+        //     Contoh: jika kolom bernama persis "Obat", "Cabut Anak", "Cabut Dewasa", dsb.
+        const tindakanFields = [
+          "Obat", 
+          "Cabut Anak", 
+          "Cabut Dewasa", 
+          "Tambal Sementara", 
+          "Tambal Tetap", 
+          "Scaling", 
+          "Rujuk"
+        ];
+
+        data.forEach(obj => {
+          // Jika sheet Anda SUDAH punya kolom "Tindakan", hapus baris di bawah ini.
+          // Karena ini hanya contoh untuk menggabungkan kolom-kolom "Obat", "Cabut Anak", dsb.
+          let arr = [];
+          tindakanFields.forEach(field => {
+            // Jika kolom ini diisi "Yes" atau "x" atau "1" menandakan tindakan
+            // Silakan sesuaikan logika di bawah sesuai isi kolom Anda
+            if (obj[field] && obj[field].trim() !== "" && obj[field].toLowerCase() !== "no") {
+              arr.push(field);
+            }
+            // Hapus kolom aslinya agar tidak mengotori data
+            delete obj[field];
+          });
+          // Gabungkan ke kolom "Tindakan"
+          if (arr.length > 0) {
+            obj["Tindakan"] = arr.join(", ");
+          }
+        });
+
         // Gabungkan data sheet ini ke allData
         allData = allData.concat(data);
 
       } catch (innerError) {
-        // Jika ada error pada sheet tertentu, misalnya range tidak valid
         console.error(`Error reading sheet "${sheetName}":`, innerError);
       }
     }
@@ -98,7 +133,6 @@ export default async function handler(req, res) {
     if (tanggal) {
       query["Tanggal Kunjungan"] = tanggal;
     } else if (month) {
-      // Contoh: "2025-03"
       query["Tanggal Kunjungan"] = { $regex: `^${month}` };
     }
 
@@ -116,5 +150,4 @@ export default async function handler(req, res) {
     console.error("Error in handler:", error);
     res.status(500).json({ status: 'error', message: 'Gagal mengambil data.' });
   }
-  // Tidak perlu client.close() di Vercel
 }
