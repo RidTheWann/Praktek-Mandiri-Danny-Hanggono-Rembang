@@ -17,23 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // --- Fungsi untuk menampilkan/menyembunyikan section ---
     function showSection(sectionId) {
-      chartSections.forEach(section => {
-        section.classList.remove('active');
-      });
+      chartSections.forEach(section => section.classList.remove('active'));
       tableSection.classList.remove('active');
   
       if (sectionId === 'kunjungan-harian') {
         tableSection.classList.add('active');
       } else {
         const sectionToShow = document.getElementById(sectionId);
-        if (sectionToShow) {
-          sectionToShow.classList.add('active');
-        }
+        if (sectionToShow) sectionToShow.classList.add('active');
       }
-      // Sembunyikan sidebar setelah memilih menu di mobile
-      if (window.innerWidth <= 768) {
-        sidebar.classList.remove('open');
-      }
+      if (window.innerWidth <= 768) sidebar.classList.remove('open');
     }
   
     // --- Event listener untuk link sidebar ---
@@ -42,15 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const sectionId = link.dataset.section;
         showSection(sectionId);
-  
-        // Hapus class 'active' dari semua link, lalu tambahkan ke yang diklik
         sidebarLinks.forEach(l => l.classList.remove('active'));
         link.classList.add('active');
   
-        // Update chart
-        if (sectionId.startsWith('total-')) {
-          updateCharts(sectionId);
-        }
+        // Update chart jika section adalah chart
+        if (sectionId.startsWith('total-')) updateCharts(sectionId);
       });
     });
   
@@ -58,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backToHomeBtn) {
       backToHomeBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        window.location.href = 'Home.html'; // Perbaiki path di sini
+        window.location.href = 'Home.html';
       });
     }
   
@@ -70,54 +59,25 @@ document.addEventListener('DOMContentLoaded', () => {
   
     async function updateCharts(sectionId) {
       try {
-        const data = await fetchData(); // Ambil data dari server
-  
+        // Ambil data tanpa filter tanggal untuk chart (atau Anda bisa menyesuaikannya jika diperlukan)
+        const data = await fetchData();
         if (sectionId === 'total-pasien-harian') {
-          const {
-            labelsHarian,
-            dataLakiHarian,
-            dataPerempuanHarian
-          } = processDataHarian(data);
-  
-          if (chartPasienHarianInstance) {
-            chartPasienHarianInstance.destroy(); // Hancurkan chart sebelumnya
-          }
+          const { labelsHarian, dataLakiHarian, dataPerempuanHarian } = processDataHarian(data);
+          if (chartPasienHarianInstance) chartPasienHarianInstance.destroy();
           chartPasienHarianInstance = createChart('chartPasienHarian', 'bar', labelsHarian, dataLakiHarian, dataPerempuanHarian);
-  
         } else if (sectionId === 'total-pasien-bulanan') {
-          const {
-            labelsBulanan,
-            dataLakiBulanan,
-            dataPerempuanBulanan
-          } = processDataBulanan(data);
-          if (chartPasienBulananInstance) {
-            chartPasienBulananInstance.destroy();
-          }
+          const { labelsBulanan, dataLakiBulanan, dataPerempuanBulanan } = processDataBulanan(data);
+          if (chartPasienBulananInstance) chartPasienBulananInstance.destroy();
           chartPasienBulananInstance = createChart('chartPasienBulanan', 'bar', labelsBulanan, dataLakiBulanan, dataPerempuanBulanan);
-  
         } else if (sectionId === 'total-biaya') {
-          const {
-            labelsBiaya,
-            dataBPJS,
-            dataUmum
-          } = processDataBiaya(data);
-          if (chartBiayaInstance) {
-            chartBiayaInstance.destroy();
-          }
+          const { labelsBiaya, dataBPJS, dataUmum } = processDataBiaya(data);
+          if (chartBiayaInstance) chartBiayaInstance.destroy();
           chartBiayaInstance = createChartBiaya('chartBiaya', labelsBiaya, dataBPJS, dataUmum);
-  
         } else if (sectionId === 'total-tindakan') {
-          const {
-            labelsTindakan,
-            dataTindakan
-          } = processDataTindakan(data);
-  
-          if (chartTindakanInstance) {
-            chartTindakanInstance.destroy();
-          }
+          const { labelsTindakan, dataTindakan } = processDataTindakan(data);
+          if (chartTindakanInstance) chartTindakanInstance.destroy();
           chartTindakanInstance = createChartTindakan('chartTindakan', labelsTindakan, dataTindakan);
         }
-  
       } catch (error) {
         console.error("Gagal update chart:", error);
       }
@@ -126,112 +86,80 @@ document.addEventListener('DOMContentLoaded', () => {
     //--------- Fungsi untuk memproses Total pasien Harian
     function processDataHarian(data) {
       const dailyCounts = {};
-  
       data.forEach(item => {
         const tanggal = item["Tanggal Kunjungan"];
         const kelamin = item["Kelamin"];
-  
         if (!dailyCounts[tanggal]) {
           dailyCounts[tanggal] = { lakiLaki: 0, perempuan: 0 };
         }
-  
-        if (kelamin === "Laki-Laki") {
-          dailyCounts[tanggal].lakiLaki++;
-        } else if (kelamin === "Perempuan") {
-          dailyCounts[tanggal].perempuan++;
-        }
+        if (kelamin === "Laki-Laki") dailyCounts[tanggal].lakiLaki++;
+        else if (kelamin === "Perempuan") dailyCounts[tanggal].perempuan++;
       });
-  
       const labelsHarian = Object.keys(dailyCounts);
-      const dataLakiHarian = labelsHarian.map(tanggal => dailyCounts[tanggal].lakiLaki);
-      const dataPerempuanHarian = labelsHarian.map(tanggal => dailyCounts[tanggal].perempuan);
-  
+      const dataLakiHarian = labelsHarian.map(t => dailyCounts[t].lakiLaki);
+      const dataPerempuanHarian = labelsHarian.map(t => dailyCounts[t].perempuan);
       return { labelsHarian, dataLakiHarian, dataPerempuanHarian };
     }
   
     //--------- Fungsi untuk memproses Total pasien Bulanan
     function processDataBulanan(data) {
       const monthlyCounts = {};
-  
       data.forEach(item => {
         const tanggal = item["Tanggal Kunjungan"];
-        const [year, month] = tanggal.split('-'); // Pisahkan tahun dan bulan
+        const [year, month] = tanggal.split('-');
         const monthYear = `${year}-${month}`;
         const kelamin = item["Kelamin"];
-  
         if (!monthlyCounts[monthYear]) {
           monthlyCounts[monthYear] = { lakiLaki: 0, perempuan: 0 };
         }
-  
-        if (kelamin === "Laki-Laki") {
-          monthlyCounts[monthYear].lakiLaki++;
-        } else if (kelamin === "Perempuan") {
-          monthlyCounts[monthYear].perempuan++;
-        }
+        if (kelamin === "Laki-Laki") monthlyCounts[monthYear].lakiLaki++;
+        else if (kelamin === "Perempuan") monthlyCounts[monthYear].perempuan++;
       });
-  
       const labelsBulanan = Object.keys(monthlyCounts);
-      const dataLakiBulanan = labelsBulanan.map(monthYear => monthlyCounts[monthYear].lakiLaki);
-      const dataPerempuanBulanan = labelsBulanan.map(monthYear => monthlyCounts[monthYear].perempuan);
-  
+      const dataLakiBulanan = labelsBulanan.map(m => monthlyCounts[m].lakiLaki);
+      const dataPerempuanBulanan = labelsBulanan.map(m => monthlyCounts[m].perempuan);
       return { labelsBulanan, dataLakiBulanan, dataPerempuanBulanan };
     }
   
     //---------- Fungsi untuk memproses Data Biaya
     function processDataBiaya(data) {
       const biayaCounts = {};
-  
       data.forEach(item => {
         const tanggal = item["Tanggal Kunjungan"];
         const [year, month] = tanggal.split('-');
         const monthYear = `${year}-${month}`;
         const biaya = item["Biaya"];
-  
         if (!biayaCounts[monthYear]) {
           biayaCounts[monthYear] = { BPJS: 0, Umum: 0 };
         }
-  
-        if (biaya === "BPJS") {
-          biayaCounts[monthYear].BPJS++;
-        } else if (biaya === "UMUM") {
-          biayaCounts[monthYear].Umum++;
-        }
+        if (biaya === "BPJS") biayaCounts[monthYear].BPJS++;
+        else if (biaya === "UMUM") biayaCounts[monthYear].Umum++;
       });
-  
       const labelsBiaya = Object.keys(biayaCounts);
-      const dataBPJS = labelsBiaya.map(monthYear => biayaCounts[monthYear].BPJS);
-      const dataUmum = labelsBiaya.map(monthYear => biayaCounts[monthYear].Umum);
-  
+      const dataBPJS = labelsBiaya.map(m => biayaCounts[m].BPJS);
+      const dataUmum = labelsBiaya.map(m => biayaCounts[m].Umum);
       return { labelsBiaya, dataBPJS, dataUmum };
     }
   
     //--------- Fungsi untuk memproses Data Tindakan
     function processDataTindakan(data) {
       const tindakanCounts = {};
-  
       data.forEach(item => {
         const tanggal = item["Tanggal Kunjungan"];
         const [year, month] = tanggal.split('-');
         const monthYear = `${year}-${month}`;
-  
         if (item["Tindakan"]) {
           const tindakanArray = item["Tindakan"].split(",").map(t => t.trim());
           tindakanArray.forEach(tindakan => {
-            if (!tindakanCounts[monthYear]) {
-              tindakanCounts[monthYear] = {};
-            }
+            if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
             tindakanCounts[monthYear][tindakan] = (tindakanCounts[monthYear][tindakan] || 0) + 1;
           });
         }
       });
-  
       const labelsTindakan = [...new Set(Object.values(tindakanCounts).flatMap(Object.keys))];
       const dataTindakan = labelsTindakan.map(tindakan => {
-        return Object.keys(tindakanCounts).reduce((total, monthYear) => {
-          return total + (tindakanCounts[monthYear][tindakan] || 0);
-        }, 0);
+        return Object.keys(tindakanCounts).reduce((total, m) => total + (tindakanCounts[m][tindakan] || 0), 0);
       });
-  
       return { labelsTindakan, dataTindakan };
     }
   
@@ -261,11 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         options: {
           maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
+          scales: { y: { beginAtZero: true } }
         }
       });
     }
@@ -296,11 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         options: {
           maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
+          scales: { y: { beginAtZero: true } }
         }
       });
     }
@@ -317,7 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'Scaling': 'rgba(255, 159, 64, 0.7)',
         'Rujuk': 'rgba(255, 0, 0, 0.7)'
       };
-  
       return new Chart(ctx, {
         type: 'bar',
         data: {
@@ -333,18 +252,10 @@ document.addEventListener('DOMContentLoaded', () => {
         options: {
           maintainAspectRatio: false,
           scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                stepSize: 1
-              }
-            }
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
           },
           plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            }
+            legend: { display: true, position: 'top' }
           }
         }
       });
@@ -363,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${item["Biaya"]}</td>
           <td>${item["Lainnya"] || "-"}</td>
           <td>
-            <button class="delete-button" data-id="${item._id}">Hapus</button> 
+            <button class="delete-button" data-id="${item._id}">Hapus</button>
           </td>
         `;
         tabelKunjunganBody.appendChild(row);
@@ -391,28 +302,19 @@ document.addEventListener('DOMContentLoaded', () => {
   
       confirmButton.onclick = async () => {
         try {
-          const response = await fetch(`/api/delete-data?index=${idToDelete}`, {
-            method: 'DELETE',
-          });
-  
+          const response = await fetch(`/api/delete-data?index=${idToDelete}`, { method: 'DELETE' });
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
           }
-  
           const result = await response.json();
           if (result.status !== "success") {
             throw new Error(result.message || "Gagal menghapus data di server");
           }
-  
-          const newData = await fetchData();
+          const newData = await fetchData(filterTanggalInput.value || null);
           populateTable(newData);
-  
           const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
-          if (activeSection) {
-            updateCharts(activeSection.id);
-          }
-  
+          if (activeSection) updateCharts(activeSection.id);
           modalMessage.textContent = 'Data berhasil dihapus.';
           confirmButton.style.display = 'none';
           cancelButton.textContent = 'OK';
@@ -422,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelButton.textContent = 'Batal';
             modalMessage.textContent = 'Apakah Anda yakin ingin menghapus data ini?';
           };
-  
         } catch (error) {
           modalMessage.textContent = `Gagal menghapus data: ${error.message}`;
           confirmButton.style.display = 'none';
@@ -441,25 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
   
-    // --- EVENT LISTENER UNTUK INPUT TANGGAL ---
-    if (filterTanggalInput) {
-      filterTanggalInput.addEventListener('change', async () => {
-        const selectedDate = filterTanggalInput.value;
-        const filteredData = await fetchData(selectedDate);
-        populateTable(filteredData);
-        const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
-        if (activeSection && activeSection.id === 'total-pasien-harian') {
-          updateCharts(activeSection.id);
-        }
-      });
-    }
-  
     // --- Fungsi untuk mengambil data dari server ---
-    async function fetchData(date = null) {
+    // Fungsi fetchData sekarang menerima parameter tanggal untuk filter.
+    async function fetchData(tanggal = null) {
       try {
         let url = '/api/get-data';
-        if (date) {
-          url += `?tanggal=${date}`;
+        if (tanggal) {
+          url += `?tanggal=${tanggal}`;
         }
         const response = await fetch(url);
         if (!response.ok) {
@@ -477,6 +366,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   
+    // --- EVENT LISTENER UNTUK INPUT TANGGAL ---
+    if (filterTanggalInput) {
+      filterTanggalInput.addEventListener('change', async () => {
+        const selectedDate = filterTanggalInput.value;
+        const filteredData = await fetchData(selectedDate);
+        populateTable(filteredData);
+        const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
+        if (activeSection && activeSection.id === 'total-pasien-harian') {
+          updateCharts(activeSection.id);
+        }
+      });
+    }
+  
     // --- Initial Load ---
     async function initialLoad() {
       const today = new Date();
@@ -488,8 +390,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (filterTanggalInput) {
         filterTanggalInput.value = todayFormatted;
       }
-  
-      const data = await fetchData();
+      // Pada initial load, gunakan filter tanggal jika diinginkan (atau ambil semua data)
+      const data = await fetchData(filterTanggalInput.value || null);
       if (data.length > 0) {
         populateTable(data);
         showSection('total-pasien-harian');
