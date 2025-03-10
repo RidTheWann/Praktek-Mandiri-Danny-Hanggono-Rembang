@@ -4,70 +4,88 @@ import { MongoClient } from 'mongodb';
 const mongodbUri = process.env.MONGODB_URI;
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
-// Validasi environment variables
-if (!mongodbUri) throw new Error("MONGODB_URI environment variable not set.");
-if (!spreadsheetId) throw new Error("SPREADSHEET_ID environment variable not set.");
-if (!process.env.GOOGLE_CREDENTIALS) throw new Error("GOOGLE_CREDENTIALS environment variable not set.");
+if (!mongodbUri) {
+  throw new Error("MONGODB_URI environment variable not set.");
+}
+if (!spreadsheetId) {
+  throw new Error("SPREADSHEET_ID environment variable not set.");
+}
 
 const client = new MongoClient(mongodbUri);
 
-// Mapping bulan Indonesia
-const bulanIndo = {
-  '01': 'Januari',
-  '02': 'Februari',
-  '03': 'Maret',
-  '04': 'April',
-  '05': 'Mei',
-  '06': 'Juni',
-  '07': 'Juli',
-  '08': 'Agustus',
-  '09': 'September',
-  '10': 'Oktober',
-  '11': 'November',
-  '12': 'Desember'
-};
-
-async function getGoogleSheetData(queryParams) {
+/**
+ * Fungsi untuk mengambil data dari SEMUA sheet (tab) di dalam satu spreadsheet.
+ */
+async function getAllSheetsData(queryParams) {
   try {
+    const googleCredentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
     const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+      credentials: googleCredentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
+    const sheetsApi = google.sheets({ version: 'v4', auth });
 
-    const sheets = google.sheets({ version: 'v4', auth });
-    const range = 'Sheet1!A1:N'; // Range sampai kolom N
-    
-    const { data } = await sheets.spreadsheets.values.get({ 
-      spreadsheetId, 
-      range 
+    // 1. Ambil metadata spreadsheet untuk mengetahui daftar sheet (tab) yang ada.
+    const metadata = await sheetsApi.spreadsheets.get({
+      spreadsheetId,
     });
-    
-    const rows = data.values || [];
+    // sheetNames akan berisi array nama sheet, misalnya ["Januari 2025", "Februari 2025", "Maret 2025"]
+    const sheetNames = metadata.data.sheets.map(s => s.properties.title);
 
-    if (rows.length === 0) return [];
+    let allData = [];
+    // 2. Iterasi setiap nama sheet untuk mengambil data.
+    for (const sheetName of sheetNames) {
+      try {
+        // Contoh range: 'Januari 2025!A1:N'
+        // Gunakan tanda kutip tunggal jika nama sheet mengandung spasi.
+        const range = `'${sheetName}'!A1:N`;
 
-    // Konversi ke object dengan format bulan Indonesia
-    const [header, ...values] = rows;
-    return values.map(row => {
-      const obj = header.reduce((acc, key, idx) => {
-        acc[key] = row[idx] || '';
-        return acc;
-      }, {});
+        const result = await sheetsApi.spreadsheets.values.get({
+          spreadsheetId,
+          range,
+        });
 
-      // Tambahkan field Bulan Tahun
-      if(obj["Tanggal Kunjungan"]) {
-        const [tahun, bulan] = obj["Tanggal Kunjungan"].split('-');
-        obj["Bulan Tahun"] = `${bulanIndo[bulan]} ${tahun}`;
+        const rows = result.data.values;
+        if (!rows || rows.length === 0) {
+          // Sheet kosong atau tidak ada data
+          continue;
+        }
+
+        // Baris pertama dianggap sebagai header
+        const header = rows[0];
+        let data = rows.slice(1).map((row) => {
+          const obj = {};
+          header.forEach((colName, i) => {
+            obj[colName] = row[i] || "";
+          });
+          return obj;
+        });
+
+        // Tambahkan kolom tambahan misalnya "Nama Sheet" jika diperlukan:
+        // data.forEach(d => d["Sheet Name"] = sheetName);
+
+        // Gabungkan data dari sheet ini ke allData
+        allData = allData.concat(data);
+
+      } catch (innerError) {
+        // Jika ada error pada sheet tertentu, misalnya sheetName tidak punya kolom A1:N
+        console.error(`Error reading sheet "${sheetName}":`, innerError);
       }
-      
-      return obj;
-    });
+    }
+
+    // 3. Filter data berdasarkan queryParams
+    const { tanggal, month } = queryParams;
+    if (tanggal) {
+      allData = allData.filter(item => item["Tanggal Kunjungan"] === tanggal);
+    } else if (month) {
+      allData = allData.filter(item => 
+        item["Tanggal Kunjungan"] && item["Tanggal Kunjungan"].startsWith(month)
+      );
+    }
+
+    return allData;
   } catch (error) {
-    console.error("Error fetching Google Sheets data:", {
-      message: error.message,
-      stack: error.stack,
-      response: error.response?.data
-    });
+    console.error("Error fetching multiple sheets data:", error);
     throw error;
   }
 }
@@ -77,67 +95,28 @@ export default async function handler(req, res) {
     await client.connect();
     const db = client.db();
 
-    // Handle query parameter bulanTahun (contoh: "Maret 2025")
-    const { bulanTahun } = req.query;
-    let dateFilter = {};
-
-    // Konversi bulanTahun ke regex
-    if (bulanTahun) {
-      const [bulan, tahun] = bulanTahun.split(' ');
-      const bulanNumber = Object.keys(bulanIndo).find(
-        key => bulanIndo[key] === bulan
-      );
-      
-      if (!bulanNumber || !tahun) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Format bulanTahun tidak valid. Gunakan format "Bulan Tahun" contoh: "Maret 2025"'
-        });
-      }
-      
-      dateFilter["Tanggal Kunjungan"] = new RegExp(`^${tahun}-${bulanNumber}`);
+    // Terima query parameter: tanggal (YYYY-MM-DD) atau month (YYYY-MM)
+    const { tanggal, month } = req.query;
+    let query = {};
+    if (tanggal) {
+      query["Tanggal Kunjungan"] = tanggal;
+    } else if (month) {
+      // Contoh: "2025-03"
+      query["Tanggal Kunjungan"] = { $regex: `^${month}` };
     }
 
-    // Ambil data dari MongoDB
-    const mongoData = await db.collection('Data Pasien')
-      .find(dateFilter)
-      .toArray();
+    // Ambil data dari MongoDB Atlas
+    const mongoData = await db.collection('Data Pasien').find(query).toArray();
 
-    // Normalisasi data MongoDB
-    const normalizedMongoData = mongoData.map(doc => ({
-      ...doc,
-      _id: doc._id.toString(),
-      "Bulan Tahun": bulanTahun // Tambahkan field untuk konsistensi
-    }));
+    // Ambil data dari SEMUA sheet di Google Sheets
+    const sheetData = await getAllSheetsData({ tanggal, month });
 
-    // Ambil data dari Google Sheets
-    const sheetData = await getGoogleSheetData(req.query);
-    
-    // Filter data Sheets berdasarkan bulanTahun
-    const filteredSheetData = bulanTahun 
-      ? sheetData.filter(item => item["Bulan Tahun"] === bulanTahun)
-      : sheetData;
+    // Gabungkan data dari kedua sumber
+    const combinedData = [...mongoData, ...sheetData];
 
-    // Gabungkan hasil
-    const combinedData = [...normalizedMongoData, ...filteredSheetData];
-
-    res.status(200).json({ 
-      status: 'success',
-      data: combinedData,
-      total: combinedData.length
-    });
-    
+    res.status(200).json({ data: combinedData });
   } catch (error) {
-    console.error("Error in handler:", {
-      message: error.message,
-      stack: error.stack,
-      query: req.query
-    });
-    
-    res.status(500).json({ 
-      status: 'error',
-      message: error.message || 'Terjadi kesalahan server',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    console.error("Error in handler:", error);
+    res.status(500).json({ status: 'error', message: 'Gagal mengambil data.' });
   }
 }
