@@ -285,9 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function populateTable(data) {
     tabelKunjunganBody.innerHTML = '';
     data.forEach(item => {
-      // Tampilkan tombol hapus untuk semua data, meskipun _id tidak ada.
-      // Jika tidak ada _id, gunakan properti 'sheetId' (yang harus dihasilkan di get-data.js).
-      const deleteButtonHtml = `<button class="delete-button" data-id="${item._id || item.sheetId}">Hapus</button>`;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item["Tanggal Kunjungan"] || ""}</td>
@@ -297,13 +294,14 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${item["Biaya"] || ""}</td>
         <td>${item["Lainnya"] || ""}</td>
         <td>
-          ${deleteButtonHtml}
+          <button class="delete-button" data-id="${item._id}">Hapus</button>
         </td>
       `;
       tabelKunjunganBody.appendChild(row);
     });
     addDeleteButtonListeners();
   }
+  
 
   function addDeleteButtonListeners() {
     const deleteButtons = document.querySelectorAll('.delete-button');

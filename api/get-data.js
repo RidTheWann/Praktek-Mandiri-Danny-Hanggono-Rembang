@@ -14,10 +14,9 @@ if (!spreadsheetId) {
 const client = new MongoClient(mongodbUri);
 
 /**
- * Fungsi untuk mengambil data dari SEMUA sheet (tab) di dalam satu spreadsheet.
- * Setiap baris dari Sheets akan diberi properti sheetInfo sebagai JSON string yang berisi
- * { sheetName, rowIndex } agar bisa diidentifikasi untuk penghapusan.
- * Data tidak melewatkan baris dengan kolom No.RM kosong.
+ * Mengambil data dari SEMUA sheet di Google Sheets (range A1:N).
+ * Kolom Obat, Cabut Anak, dll. digabung menjadi kolom "Tindakan".
+ * Baris tanpa "Tanggal Kunjungan" di-skip agar tidak muncul data kosong.
  */
 async function getAllSheetsData(queryParams) {
   try {
@@ -27,13 +26,16 @@ async function getAllSheetsData(queryParams) {
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
     const sheetsApi = google.sheets({ version: 'v4', auth });
-    // Ambil metadata untuk mendapatkan daftar sheet
+
+    // Ambil metadata (untuk daftar sheet/tab)
     const metadata = await sheetsApi.spreadsheets.get({ spreadsheetId });
     const sheetNames = metadata.data.sheets.map(s => s.properties.title);
+
     let allData = [];
+
     for (const sheetName of sheetNames) {
       try {
-        // Misal, range: 'SheetName!A1:N'
+        // Range sampai kolom N
         const range = `'${sheetName}'!A1:N`;
         const result = await sheetsApi.spreadsheets.values.get({
           spreadsheetId,
@@ -41,42 +43,65 @@ async function getAllSheetsData(queryParams) {
         });
         const rows = result.data.values;
         if (!rows || rows.length === 0) continue;
+
         const header = rows[0];
-        let data = rows.slice(1).map((row, index) => {
+        // Data mulai baris 2
+        let data = rows.slice(1).map((row) => {
           const obj = {};
           header.forEach((colName, i) => {
             obj[colName] = row[i] || "";
           });
-          // Tambahkan properti sheetInfo agar delete-data.js dapat mengenali baris dari Sheets
-          obj.sheetInfo = JSON.stringify({ sheetName, rowIndex: index + 2 }); // +2: baris 1 adalah header
           return obj;
         });
-        // Hanya skip baris yang tidak memiliki "Tanggal Kunjungan" (untuk menghindari baris kosong)
-        data = data.filter(obj => obj["Tanggal Kunjungan"] && obj["Tanggal Kunjungan"].trim() !== "");
-        // Jika kolom tindakan disimpan terpisah, gabungkan menjadi satu field "Tindakan".
-        const tindakanFields = ["Obat", "Cabut Anak", "Cabut Dewasa", "Tambal Sementara", "Tambal Tetap", "Scaling", "Rujuk"];
+
+        // Skip baris tanpa "Tanggal Kunjungan"
+        data = data.filter(obj => {
+          const tgl = (obj["Tanggal Kunjungan"] || "").trim();
+          return tgl && tgl !== "-";
+        });
+
+        // Gabungkan kolom Obat, Cabut Anak, dll. menjadi "Tindakan"
+        const tindakanFields = [
+          "Obat", 
+          "Cabut Anak", 
+          "Cabut Dewasa", 
+          "Tambal Sementara", 
+          "Tambal Tetap", 
+          "Scaling", 
+          "Rujuk"
+        ];
         data.forEach(obj => {
           let arr = [];
           tindakanFields.forEach(field => {
-            if (obj[field] && obj[field].trim() !== "" && obj[field].toLowerCase() !== "no") {
+            const val = (obj[field] || "").trim();
+            // Jika kolom ini diisi "Yes", "X", atau apapun selain kosong/No, 
+            // maka tambahkan field ke array Tindakan.
+            if (val && val.toLowerCase() !== "no") {
               arr.push(field);
             }
+            // Hapus kolom aslinya agar tidak muncul di final data
             delete obj[field];
           });
+          // Gabungkan array menjadi string "Obat, Cabut Anak, ..."
           if (arr.length > 0) {
             obj["Tindakan"] = arr.join(", ");
           }
         });
+
         allData = allData.concat(data);
       } catch (innerError) {
         console.error(`Error reading sheet "${sheetName}":`, innerError);
       }
     }
+
+    // Filter berdasarkan query params: ?tanggal=... atau ?month=...
     const { tanggal, month } = queryParams;
     if (tanggal) {
       allData = allData.filter(item => item["Tanggal Kunjungan"] === tanggal);
     } else if (month) {
-      allData = allData.filter(item => item["Tanggal Kunjungan"] && item["Tanggal Kunjungan"].startsWith(month));
+      allData = allData.filter(item => 
+        item["Tanggal Kunjungan"] && item["Tanggal Kunjungan"].startsWith(month)
+      );
     }
     return allData;
   } catch (error) {
@@ -86,16 +111,15 @@ async function getAllSheetsData(queryParams) {
 }
 
 /**
- * Fungsi deduplikasi berdasarkan kombinasi "Tanggal Kunjungan" dan "No.RM".
- * (Jika nilai No.RM kosong, kunci unik hanya mengandalkan tanggal.)
+ * Deduplikasi berdasarkan (Tanggal Kunjungan + No.RM).
  */
 function deduplicateData(data) {
   const seen = new Set();
   const result = [];
   for (const item of data) {
-    const tanggal = item["Tanggal Kunjungan"] ? item["Tanggal Kunjungan"].trim() : "";
-    const noRM = item["No.RM"] ? item["No.RM"].trim() : "";
-    const uniqueKey = `${tanggal}_${noRM}`;
+    const tgl = (item["Tanggal Kunjungan"] || "").trim();
+    const noRM = (item["No.RM"] || "").trim();
+    const uniqueKey = `${tgl}_${noRM}`;
     if (!seen.has(uniqueKey)) {
       seen.add(uniqueKey);
       result.push(item);
@@ -104,10 +128,13 @@ function deduplicateData(data) {
   return result;
 }
 
+import { MongoClient } from 'mongodb';
+
 export default async function handler(req, res) {
   try {
     await client.connect();
     const db = client.db();
+
     const { tanggal, month } = req.query;
     let query = {};
     if (tanggal) {
@@ -115,10 +142,16 @@ export default async function handler(req, res) {
     } else if (month) {
       query["Tanggal Kunjungan"] = { $regex: `^${month}` };
     }
+
+    // Data MongoDB
     const mongoData = await db.collection('Data Pasien').find(query).toArray();
+    // Data Google Sheets
     const sheetData = await getAllSheetsData({ tanggal, month });
+
+    // Gabung & deduplikasi
     let combinedData = [...mongoData, ...sheetData];
     combinedData = deduplicateData(combinedData);
+
     res.status(200).json({ data: combinedData });
   } catch (error) {
     console.error("Error in handler:", error);
