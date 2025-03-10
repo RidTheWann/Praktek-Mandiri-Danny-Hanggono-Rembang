@@ -285,6 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function populateTable(data) {
     tabelKunjunganBody.innerHTML = '';
     data.forEach(item => {
+      // Gunakan _id jika data MongoDB, atau item.sheetInfo jika data Sheets
+      const deleteId = item._id || item.sheetInfo;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item["Tanggal Kunjungan"] || ""}</td>
@@ -294,13 +296,14 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${item["Biaya"] || ""}</td>
         <td>${item["Lainnya"] || ""}</td>
         <td>
-          <button class="delete-button" data-id="${item._id}">Hapus</button>
+          <button class="delete-button" data-id='${deleteId}'>Hapus</button>
         </td>
       `;
       tabelKunjunganBody.appendChild(row);
     });
     addDeleteButtonListeners();
   }
+  
   
 
   function addDeleteButtonListeners() {

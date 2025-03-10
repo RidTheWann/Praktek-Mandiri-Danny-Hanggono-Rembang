@@ -20,12 +20,14 @@ async function deleteSheetRow(sheetName, rowIndex) {
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
   const sheetsApi = google.sheets({ version: 'v4', auth });
-  // Dapatkan sheetId berdasarkan sheetName
+
+  // Dapatkan sheetId dari sheetName
   const metadata = await sheetsApi.spreadsheets.get({ spreadsheetId });
   const sheet = metadata.data.sheets.find(s => s.properties.title === sheetName);
-  if (!sheet) throw new Error(`Sheet dengan nama "${sheetName}" tidak ditemukan.`);
+  if (!sheet) throw new Error(`Sheet "${sheetName}" tidak ditemukan.`);
   const sheetId = sheet.properties.sheetId;
-  // DeleteDimension menggunakan indeks nol (rowIndex - 1) karena indeks dimulai dari 0.
+
+  // rowIndex adalah 1-based, sedangkan Sheets internal 0-based
   const startIndex = rowIndex - 1;
   const endIndex = startIndex + 1;
   const request = {
@@ -59,7 +61,7 @@ export default async function handler(req, res) {
     if (!idToDelete) {
       return res.status(400).json({ status: 'error', message: 'ID data harus disertakan.' });
     }
-    // Cek apakah idToDelete merupakan ObjectId yang valid (untuk MongoDB)
+    // Cek apakah idToDelete valid ObjectId → hapus di MongoDB
     if (ObjectId.isValid(idToDelete)) {
       await client.connect();
       const db = client.db();
@@ -69,7 +71,7 @@ export default async function handler(req, res) {
       }
       return res.status(200).json({ status: 'success', message: 'Data berhasil dihapus dari MongoDB.' });
     } else {
-      // Jika bukan ObjectId, asumsikan idToDelete adalah JSON string dari sheetInfo
+      // Jika bukan ObjectId, asumsikan JSON string sheetInfo
       let sheetInfo;
       try {
         sheetInfo = JSON.parse(idToDelete);
@@ -77,10 +79,14 @@ export default async function handler(req, res) {
         throw new Error('Format ID data Google Sheets tidak valid.');
       }
       if (!sheetInfo.sheetName || !sheetInfo.rowIndex) {
-        throw new Error('Informasi sheet atau row tidak lengkap.');
+        throw new Error('sheetName atau rowIndex tidak lengkap.');
       }
       const deletionResponse = await deleteSheetRow(sheetInfo.sheetName, sheetInfo.rowIndex);
-      return res.status(200).json({ status: 'success', message: 'Data berhasil dihapus dari Google Sheets.', deletionResponse });
+      return res.status(200).json({
+        status: 'success',
+        message: 'Data berhasil dihapus dari Google Sheets.',
+        deletionResponse
+      });
     }
   } catch (error) {
     console.error("Error on DELETE:", error);
