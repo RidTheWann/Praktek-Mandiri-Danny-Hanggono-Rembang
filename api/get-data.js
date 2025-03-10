@@ -37,8 +37,8 @@ async function getAllSheetsData(queryParams) {
     // 2. Iterasi setiap sheet
     for (const sheetName of sheetNames) {
       try {
-        // Ubah A1:N sesuai jumlah kolom di Google Sheets Anda
-        // Gunakan tanda kutip tunggal jika ada spasi di nama sheet
+        // Ubah A1:N sesuai jumlah kolom di Google Sheets Anda.
+        // Gunakan tanda kutip tunggal jika ada spasi di nama sheet.
         const range = `'${sheetName}'!A1:N`;
 
         const result = await sheetsApi.spreadsheets.values.get({
@@ -62,12 +62,12 @@ async function getAllSheetsData(queryParams) {
           return obj;
         });
 
-        // (1) Skip baris yang Tanggal Kunjungannya kosong agar tidak muncul baris "-" di tabel
+        // (1) Skip baris yang Tanggal Kunjungannya kosong agar tidak muncul baris "-"
         data = data.filter(obj => obj["Tanggal Kunjungan"]);
 
-        // (2) Jika Anda menyimpan kolom tindakan terpisah, misalnya "Obat", "Cabut Anak", "Scaling", dsb.
-        //     Gabungkan jadi satu field "Tindakan".
-        //     Contoh: jika kolom bernama persis "Obat", "Cabut Anak", "Cabut Dewasa", dsb.
+        // (2) Jika Anda menyimpan kolom tindakan terpisah (misalnya "Obat", "Cabut Anak", dll.),
+        //     gabungkan jadi satu field "Tindakan". Jika sheet Anda sudah punya kolom "Tindakan",
+        //     bagian ini bisa dilewati.
         const tindakanFields = [
           "Obat", 
           "Cabut Anak", 
@@ -79,19 +79,14 @@ async function getAllSheetsData(queryParams) {
         ];
 
         data.forEach(obj => {
-          // Jika sheet Anda SUDAH punya kolom "Tindakan", hapus baris di bawah ini.
-          // Karena ini hanya contoh untuk menggabungkan kolom-kolom "Obat", "Cabut Anak", dsb.
           let arr = [];
           tindakanFields.forEach(field => {
-            // Jika kolom ini diisi "Yes" atau "x" atau "1" menandakan tindakan
-            // Silakan sesuaikan logika di bawah sesuai isi kolom Anda
             if (obj[field] && obj[field].trim() !== "" && obj[field].toLowerCase() !== "no") {
               arr.push(field);
             }
             // Hapus kolom aslinya agar tidak mengotori data
             delete obj[field];
           });
-          // Gabungkan ke kolom "Tindakan"
           if (arr.length > 0) {
             obj["Tindakan"] = arr.join(", ");
           }
@@ -122,6 +117,27 @@ async function getAllSheetsData(queryParams) {
   }
 }
 
+/**
+ * Fungsi untuk menghilangkan duplikat dari data gabungan.
+ * Kita menggunakan kombinasi "Tanggal Kunjungan" dan "No.RM" sebagai kunci unik.
+ */
+function deduplicateData(data) {
+  const seen = new Set();
+  const result = [];
+
+  for (const item of data) {
+    // Pastikan kedua field sudah di-trim untuk menghindari perbedaan spasi.
+    const tanggal = item["Tanggal Kunjungan"] ? item["Tanggal Kunjungan"].trim() : "";
+    const noRM = item["No.RM"] ? item["No.RM"].trim() : "";
+    const uniqueKey = `${tanggal}_${noRM}`;
+    if (!seen.has(uniqueKey)) {
+      seen.add(uniqueKey);
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 export default async function handler(req, res) {
   try {
     await client.connect();
@@ -143,7 +159,10 @@ export default async function handler(req, res) {
     const sheetData = await getAllSheetsData({ tanggal, month });
 
     // Gabungkan data dari kedua sumber
-    const combinedData = [...mongoData, ...sheetData];
+    let combinedData = [...mongoData, ...sheetData];
+
+    // Lakukan deduplikasi untuk menghindari data double
+    combinedData = deduplicateData(combinedData);
 
     res.status(200).json({ data: combinedData });
   } catch (error) {
