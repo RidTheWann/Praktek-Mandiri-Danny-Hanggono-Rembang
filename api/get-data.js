@@ -14,8 +14,8 @@ if (!spreadsheetId) {
 const client = new MongoClient(mongodbUri);
 
 /**
- * Fungsi untuk mengambil data dari SEMUA sheet (tab) di dalam satu spreadsheet,
- * lalu menggabungkan kolom-kolom tindakan (jika perlu) dan melewati baris kosong.
+ * Fungsi untuk mengambil data dari SEMUA sheet (tab) di dalam satu spreadsheet.
+ * Menggabungkan kolom tindakan jika diperlukan dan melewati baris yang tidak memiliki Tanggal Kunjungan.
  */
 async function getAllSheetsData(queryParams) {
   try {
@@ -26,86 +26,77 @@ async function getAllSheetsData(queryParams) {
     });
     const sheetsApi = google.sheets({ version: 'v4', auth });
 
-    // 1. Ambil metadata spreadsheet (untuk daftar sheet/tab).
-    const metadata = await sheetsApi.spreadsheets.get({
-      spreadsheetId,
-    });
-    const sheetNames = metadata.data.sheets.map(s => s.properties.title); // array nama sheet
+    // Ambil metadata untuk daftar sheet
+    const metadata = await sheetsApi.spreadsheets.get({ spreadsheetId });
+    const sheetNames = metadata.data.sheets.map(s => s.properties.title);
 
     let allData = [];
 
-    // 2. Iterasi setiap sheet
+    // Iterasi setiap sheet
     for (const sheetName of sheetNames) {
       try {
-        // Ubah A1:N sesuai jumlah kolom di Google Sheets Anda.
-        // Gunakan tanda kutip tunggal jika ada spasi di nama sheet.
+        // Ubah range sesuai dengan jumlah kolom di sheet Anda (misal A1:N)
         const range = `'${sheetName}'!A1:N`;
-
         const result = await sheetsApi.spreadsheets.values.get({
           spreadsheetId,
           range,
         });
 
         const rows = result.data.values;
-        if (!rows || rows.length === 0) {
-          // Sheet kosong atau tidak ada data
-          continue;
-        }
+        if (!rows || rows.length === 0) continue;
 
-        // Baris pertama dianggap header
+        // Baris pertama sebagai header
         const header = rows[0];
         let data = rows.slice(1).map((row) => {
           const obj = {};
           header.forEach((colName, i) => {
-            obj[colName] = row[i] || "";
+            obj[colName] = row[i] ? row[i].trim() : "";
           });
           return obj;
         });
 
-        // (1) Skip baris yang Tanggal Kunjungannya kosong agar tidak muncul baris "-"
-        data = data.filter(obj => obj["Tanggal Kunjungan"]);
+        // Skip baris tanpa Tanggal Kunjungan
+        data = data.filter(obj => obj["Tanggal Kunjungan"] && obj["Tanggal Kunjungan"] !== "-");
 
-        // (2) Jika Anda menyimpan kolom tindakan terpisah (misalnya "Obat", "Cabut Anak", dll.),
-        //     gabungkan jadi satu field "Tindakan". Jika sheet Anda sudah punya kolom "Tindakan",
-        //     bagian ini bisa dilewati.
+        // Gabungkan kolom tindakan jika tidak ada kolom "Tindakan"
         const tindakanFields = [
-          "Obat", 
-          "Cabut Anak", 
-          "Cabut Dewasa", 
-          "Tambal Sementara", 
-          "Tambal Tetap", 
-          "Scaling", 
+          "Obat",
+          "Cabut Anak",
+          "Cabut Dewasa",
+          "Tambal Sementara",
+          "Tambal Tetap",
+          "Scaling",
           "Rujuk"
         ];
-
         data.forEach(obj => {
-          let arr = [];
-          tindakanFields.forEach(field => {
-            if (obj[field] && obj[field].trim() !== "" && obj[field].toLowerCase() !== "no") {
-              arr.push(field);
+          // Hanya jika field "Tindakan" belum ada (jika sudah ada, anggap data sudah lengkap)
+          if (!obj["Tindakan"]) {
+            let arr = [];
+            tindakanFields.forEach(field => {
+              if (obj[field] && obj[field].trim() !== "" && obj[field].toLowerCase() !== "no") {
+                arr.push(field);
+              }
+              // Hapus kolom aslinya agar tidak mengotori data
+              delete obj[field];
+            });
+            if (arr.length > 0) {
+              obj["Tindakan"] = arr.join(", ");
             }
-            // Hapus kolom aslinya agar tidak mengotori data
-            delete obj[field];
-          });
-          if (arr.length > 0) {
-            obj["Tindakan"] = arr.join(", ");
           }
         });
 
-        // Gabungkan data sheet ini ke allData
         allData = allData.concat(data);
-
       } catch (innerError) {
         console.error(`Error reading sheet "${sheetName}":`, innerError);
       }
     }
 
-    // 3. Filter data berdasarkan queryParams (tanggal atau month)
+    // Filter berdasarkan queryParams jika diperlukan
     const { tanggal, month } = queryParams;
     if (tanggal) {
       allData = allData.filter(item => item["Tanggal Kunjungan"] === tanggal);
     } else if (month) {
-      allData = allData.filter(item => 
+      allData = allData.filter(item =>
         item["Tanggal Kunjungan"] && item["Tanggal Kunjungan"].startsWith(month)
       );
     }
@@ -118,18 +109,15 @@ async function getAllSheetsData(queryParams) {
 }
 
 /**
- * Fungsi untuk menghilangkan duplikat dari data gabungan.
- * Kita menggunakan kombinasi "Tanggal Kunjungan" dan "No.RM" sebagai kunci unik.
+ * Fungsi untuk menghilangkan duplikat berdasarkan kunci unik: Tanggal Kunjungan + No.RM.
  */
 function deduplicateData(data) {
   const seen = new Set();
   const result = [];
-
   for (const item of data) {
-    // Pastikan kedua field sudah di-trim untuk menghindari perbedaan spasi.
-    const tanggal = item["Tanggal Kunjungan"] ? item["Tanggal Kunjungan"].trim() : "";
+    const tgl = item["Tanggal Kunjungan"] ? item["Tanggal Kunjungan"].trim() : "";
     const noRM = item["No.RM"] ? item["No.RM"].trim() : "";
-    const uniqueKey = `${tanggal}_${noRM}`;
+    const uniqueKey = `${tgl}_${noRM}`;
     if (!seen.has(uniqueKey)) {
       seen.add(uniqueKey);
       result.push(item);
@@ -161,7 +149,7 @@ export default async function handler(req, res) {
     // Gabungkan data dari kedua sumber
     let combinedData = [...mongoData, ...sheetData];
 
-    // Lakukan deduplikasi untuk menghindari data double
+    // Lakukan deduplikasi
     combinedData = deduplicateData(combinedData);
 
     res.status(200).json({ data: combinedData });

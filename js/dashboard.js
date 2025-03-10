@@ -6,16 +6,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const backToHomeBtn = document.getElementById('backToHome');
   const menuToggle = document.querySelector('.menu-toggle');
   const sidebar = document.querySelector('.sidebar');
-  const filterTanggalInput = document.getElementById('filter-tanggal'); // Elemen input tanggal
+  const filterTanggalInput = document.getElementById('filter-tanggal');
 
-  // --- Toggle Sidebar (for mobile) ---
+  // Toggle Sidebar untuk mobile
   if (menuToggle) {
     menuToggle.addEventListener('click', () => {
       sidebar.classList.toggle('open');
     });
   }
 
-  // --- Fungsi untuk menampilkan/menyembunyikan section ---
+  // Fungsi untuk menampilkan section
   function showSection(sectionId) {
     chartSections.forEach(section => section.classList.remove('active'));
     tableSection.classList.remove('active');
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.innerWidth <= 768) sidebar.classList.remove('open');
   }
 
-  // --- Event listener untuk link sidebar ---
+  // Event listener untuk sidebar
   sidebarLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -38,12 +38,11 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebarLinks.forEach(l => l.classList.remove('active'));
       link.classList.add('active');
 
-      // Update chart jika section adalah chart
       if (sectionId.startsWith('total-')) updateCharts(sectionId);
     });
   });
 
-  // --- Event listener untuk tombol kembali ke home ---
+  // Tombol kembali ke Home
   if (backToHomeBtn) {
     backToHomeBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -51,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Fungsi untuk update chart ---
+  // Fungsi update chart
   let chartPasienHarianInstance = null;
   let chartPasienBulananInstance = null;
   let chartBiayaInstance = null;
@@ -59,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function updateCharts(sectionId) {
     try {
-      // Ambil data tanpa filter tanggal untuk chart
       const data = await fetchData();
       if (sectionId === 'total-pasien-harian') {
         const { labelsHarian, dataLakiHarian, dataPerempuanHarian } = processDataHarian(data);
@@ -83,16 +81,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  //--------- Fungsi untuk memproses Total pasien Harian
+  // Fungsi untuk memproses Total Pasien Harian
   function processDataHarian(data) {
     const dailyCounts = {};
     data.forEach(item => {
       const tanggal = item["Tanggal Kunjungan"];
-      const kelamin = item["Kelamin"];
+      const kelamin = (item["Kelamin"] || "").trim();
+      if (!tanggal) return;
       if (!dailyCounts[tanggal]) {
         dailyCounts[tanggal] = { lakiLaki: 0, perempuan: 0 };
       }
-      if (kelamin === "Laki-Laki") dailyCounts[tanggal].lakiLaki++;
+      if (kelamin === "Laki-Laki" || kelamin === "Laki - Laki") dailyCounts[tanggal].lakiLaki++;
       else if (kelamin === "Perempuan") dailyCounts[tanggal].perempuan++;
     });
     const labelsHarian = Object.keys(dailyCounts);
@@ -101,18 +100,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsHarian, dataLakiHarian, dataPerempuanHarian };
   }
 
-  //--------- Fungsi untuk memproses Total pasien Bulanan
+  // Fungsi untuk memproses Total Pasien Bulanan
   function processDataBulanan(data) {
     const monthlyCounts = {};
     data.forEach(item => {
       const tanggal = item["Tanggal Kunjungan"];
+      if (!tanggal || !tanggal.includes('-')) return;
       const [year, month] = tanggal.split('-');
       const monthYear = `${year}-${month}`;
-      const kelamin = item["Kelamin"];
+      const kelamin = (item["Kelamin"] || "").trim();
       if (!monthlyCounts[monthYear]) {
         monthlyCounts[monthYear] = { lakiLaki: 0, perempuan: 0 };
       }
-      if (kelamin === "Laki-Laki") monthlyCounts[monthYear].lakiLaki++;
+      if (kelamin === "Laki-Laki" || kelamin === "Laki - Laki") monthlyCounts[monthYear].lakiLaki++;
       else if (kelamin === "Perempuan") monthlyCounts[monthYear].perempuan++;
     });
     const labelsBulanan = Object.keys(monthlyCounts);
@@ -121,11 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsBulanan, dataLakiBulanan, dataPerempuanBulanan };
   }
 
-  //---------- Fungsi untuk memproses Data Biaya
+  // Fungsi untuk memproses Data Biaya
   function processDataBiaya(data) {
     const biayaCounts = {};
     data.forEach(item => {
       const tanggal = item["Tanggal Kunjungan"];
+      if (!tanggal || !tanggal.includes('-')) return;
       const [year, month] = tanggal.split('-');
       const monthYear = `${year}-${month}`;
       const biaya = item["Biaya"];
@@ -141,21 +142,28 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsBiaya, dataBPJS, dataUmum };
   }
 
-  //--------- Fungsi untuk memproses Data Tindakan
+  // Fungsi untuk memproses Data Tindakan (termasuk kategori "Lainnya")
   function processDataTindakan(data) {
     const tindakanCounts = {};
     data.forEach(item => {
       const tanggal = item["Tanggal Kunjungan"];
+      if (!tanggal || !tanggal.includes('-')) return;
       const [year, month] = tanggal.split('-');
       const monthYear = `${year}-${month}`;
+      if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
+      // Proses kolom "Tindakan"
       if (item["Tindakan"]) {
         const tindakanArray = item["Tindakan"].split(",").map(t => t.trim());
         tindakanArray.forEach(tindakan => {
-          if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
           tindakanCounts[monthYear][tindakan] = (tindakanCounts[monthYear][tindakan] || 0) + 1;
         });
       }
+      // Sertakan kolom "Lainnya" sebagai kategori "Lainnya" jika ada nilai yang valid
+      if (item["Lainnya"] && item["Lainnya"].trim() !== "" && item["Lainnya"].trim() !== "-") {
+        tindakanCounts[monthYear]["Lainnya"] = (tindakanCounts[monthYear]["Lainnya"] || 0) + 1;
+      }
     });
+    // Ambil label dari seluruh data tindakan
     const labelsTindakan = [...new Set(Object.values(tindakanCounts).flatMap(Object.keys))];
     const dataTindakan = labelsTindakan.map(tindakan => {
       return Object.keys(tindakanCounts).reduce((total, m) => total + (tindakanCounts[m][tindakan] || 0), 0);
@@ -163,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsTindakan, dataTindakan };
   }
 
-  //----- CHART UNTUK TOTAL PASIEN HARIAN DAN BULANAN
+  // Chart Total Pasien Harian & Bulanan
   function createChart(canvasId, type, labels, dataLaki, dataPerempuan) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     return new Chart(ctx, {
@@ -194,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  //----- CHART UNTUK BIAYA
+  // Chart Biaya
   function createChartBiaya(canvasId, labels, dataBPJS, dataUmum) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     return new Chart(ctx, {
@@ -225,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  //----- CHART UNTUK TINDAKAN
+  // Chart Tindakan (termasuk kategori "Lainnya")
   function createChartTindakan(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     const colorMap = {
@@ -235,7 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'Tambal Sementara': 'rgba(75, 192, 192, 0.7)',
       'Tambal Tetap': 'rgba(153, 102, 255, 0.7)',
       'Scaling': 'rgba(255, 159, 64, 0.7)',
-      'Rujuk': 'rgba(255, 0, 0, 0.7)'
+      'Rujuk': 'rgba(255, 0, 0, 0.7)',
+      'Lainnya': 'rgba(128, 128, 128, 0.7)' // Warna khusus untuk kategori "Lainnya"
     };
     return new Chart(ctx, {
       type: 'bar',
@@ -254,14 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
         scales: {
           y: { beginAtZero: true, ticks: { stepSize: 1 } }
         },
-        plugins: {
-          legend: { display: true, position: 'top' }
-        }
+        plugins: { legend: { display: true, position: 'top' } }
       }
     });
   }
 
-  // --- Fungsi untuk mengisi tabel kunjungan harian ---
+  // Fungsi mengisi tabel kunjungan harian
   function populateTable(data) {
     tabelKunjunganBody.innerHTML = '';
     data.forEach(item => {
@@ -282,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addDeleteButtonListeners();
   }
 
-  // --- Fungsi untuk menambahkan event listener ke tombol hapus ---
+  // Fungsi untuk menambahkan event listener ke tombol hapus
   function addDeleteButtonListeners() {
     const deleteButtons = document.querySelectorAll('.delete-button');
     deleteButtons.forEach(button => {
@@ -290,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Fungsi handler untuk tombol hapus ---
+  // Fungsi handler untuk tombol hapus
   async function handleDelete(event) {
     const idToDelete = event.target.dataset.id;
     const modal = document.getElementById('deleteConfirmationModal');
@@ -342,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // --- Fungsi untuk mengambil data dari server (dengan filter tanggal opsional) ---
+  // Fungsi untuk mengambil data dari server (dengan filter tanggal opsional)
   async function fetchData(tanggal = null) {
     try {
       let url = '/api/get-data';
@@ -365,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- EVENT LISTENER UNTUK INPUT TANGGAL ---
+  // Event listener untuk input tanggal
   if (filterTanggalInput) {
     filterTanggalInput.addEventListener('change', async () => {
       const selectedDate = filterTanggalInput.value;
@@ -378,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Initial Load ---
+  // Initial Load
   async function initialLoad() {
     const today = new Date();
     const yyyy = today.getFullYear();
