@@ -25,8 +25,9 @@ async function getGoogleSheetData(queryParams) {
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
     const sheets = google.sheets({ version: 'v4', auth });
-    // Pastikan range ini sesuai dengan data di Google Sheets Anda.
-    const range = 'Sheet1!A1:F';
+    
+    // Ubah range menjadi "Sheet1!A:F" untuk mengambil seluruh data dari kolom A sampai F.
+    const range = 'Sheet1!A:F';
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,
@@ -72,7 +73,7 @@ export default async function handler(req, res) {
     if (tanggal) {
       query["Tanggal Kunjungan"] = tanggal;
     } else if (month) {
-      // Gunakan regex untuk mencocokkan awalan, misal "2025-03"
+      // Gunakan regex untuk mencocokkan awalan, misalnya "2025-03"
       query["Tanggal Kunjungan"] = { $regex: `^${month}` };
     }
 
