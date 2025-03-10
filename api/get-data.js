@@ -25,21 +25,21 @@ async function getAllSheetsData(queryParams) {
     });
     const sheetsApi = google.sheets({ version: 'v4', auth });
 
-    // 1. Ambil metadata spreadsheet untuk mengetahui daftar sheet (tab) yang ada.
+    // 1. Ambil metadata spreadsheet (untuk daftar sheet/tab).
     const metadata = await sheetsApi.spreadsheets.get({
       spreadsheetId,
     });
-    // sheetNames akan berisi array nama sheet, misalnya ["Januari 2025", "Februari 2025", "Maret 2025"]
+    // sheetNames akan berisi array nama sheet, misalnya ["Januari 2025", "Februari 2025", "Maret 2025", ...]
     const sheetNames = metadata.data.sheets.map(s => s.properties.title);
 
     let allData = [];
-    // 2. Iterasi setiap nama sheet untuk mengambil data.
+
+    // 2. Iterasi setiap sheet untuk mengambil data
     for (const sheetName of sheetNames) {
       try {
         // Contoh range: 'Januari 2025!A1:N'
-        // Gunakan tanda kutip tunggal jika nama sheet mengandung spasi.
-        const range = `'${sheetName}'!A1:N`;
-
+        // Gunakan tanda kutip tunggal jika ada spasi di nama sheet
+        const range = `'${sheetName}'!A1:N`; 
         const result = await sheetsApi.spreadsheets.values.get({
           spreadsheetId,
           range,
@@ -61,19 +61,16 @@ async function getAllSheetsData(queryParams) {
           return obj;
         });
 
-        // Tambahkan kolom tambahan misalnya "Nama Sheet" jika diperlukan:
-        // data.forEach(d => d["Sheet Name"] = sheetName);
-
-        // Gabungkan data dari sheet ini ke allData
+        // Gabungkan data sheet ini ke allData
         allData = allData.concat(data);
 
       } catch (innerError) {
-        // Jika ada error pada sheet tertentu, misalnya sheetName tidak punya kolom A1:N
+        // Jika ada error pada sheet tertentu, misalnya range tidak valid
         console.error(`Error reading sheet "${sheetName}":`, innerError);
       }
     }
 
-    // 3. Filter data berdasarkan queryParams
+    // 3. Filter data berdasarkan queryParams (tanggal atau month)
     const { tanggal, month } = queryParams;
     if (tanggal) {
       allData = allData.filter(item => item["Tanggal Kunjungan"] === tanggal);
@@ -119,4 +116,5 @@ export default async function handler(req, res) {
     console.error("Error in handler:", error);
     res.status(500).json({ status: 'error', message: 'Gagal mengambil data.' });
   }
+  // Tidak perlu client.close() di Vercel
 }
