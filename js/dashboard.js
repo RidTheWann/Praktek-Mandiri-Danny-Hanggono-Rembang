@@ -8,12 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.querySelector('.sidebar');
   const filterTanggalInput = document.getElementById('filter-tanggal');
 
+  // Toggle Sidebar (for mobile)
   if (menuToggle) {
     menuToggle.addEventListener('click', () => {
       sidebar.classList.toggle('open');
     });
   }
 
+  // Fungsi untuk menampilkan/menyembunyikan section
   function showSection(sectionId) {
     chartSections.forEach(section => section.classList.remove('active'));
     tableSection.classList.remove('active');
@@ -26,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.innerWidth <= 768) sidebar.classList.remove('open');
   }
 
+  // Event listener untuk link sidebar
   sidebarLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -37,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Tombol kembali ke home
   if (backToHomeBtn) {
     backToHomeBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -44,11 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Chart instances
   let chartPasienHarianInstance = null;
   let chartPasienBulananInstance = null;
   let chartBiayaInstance = null;
   let chartTindakanInstance = null;
 
+  // Update chart berdasarkan section
   async function updateCharts(sectionId) {
     try {
       const data = await fetchData();
@@ -56,14 +62,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const { labelsHarian, dataLakiHarian, dataPerempuanHarian } = processDataHarian(data);
         if (chartPasienHarianInstance) chartPasienHarianInstance.destroy();
         chartPasienHarianInstance = createChart('chartPasienHarian', 'bar', labelsHarian, dataLakiHarian, dataPerempuanHarian);
+
       } else if (sectionId === 'total-pasien-bulanan') {
         const { labelsBulanan, dataLakiBulanan, dataPerempuanBulanan } = processDataBulanan(data);
         if (chartPasienBulananInstance) chartPasienBulananInstance.destroy();
         chartPasienBulananInstance = createChart('chartPasienBulanan', 'bar', labelsBulanan, dataLakiBulanan, dataPerempuanBulanan);
+
       } else if (sectionId === 'total-biaya') {
         const { labelsBiaya, dataBPJS, dataUmum } = processDataBiaya(data);
         if (chartBiayaInstance) chartBiayaInstance.destroy();
         chartBiayaInstance = createChartBiaya('chartBiaya', labelsBiaya, dataBPJS, dataUmum);
+
       } else if (sectionId === 'total-tindakan') {
         const { labelsTindakan, dataTindakan } = processDataTindakan(data);
         if (chartTindakanInstance) chartTindakanInstance.destroy();
@@ -74,16 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ======== Fungsi Pemrosesan Data ========
+  // ===================== Pemrosesan Data =====================
 
   // 1. Total Pasien Harian
   function processDataHarian(data) {
     const dailyCounts = {};
     data.forEach(item => {
-      let tanggal = item["Tanggal Kunjungan"];
-      if (!tanggal) return;
-      tanggal = tanggal.trim();
-      if (!tanggal || tanggal === "-") return;
+      let tanggal = (item["Tanggal Kunjungan"] || "").trim();
+      if (!tanggal || tanggal === "-") return; // lewati baris tanpa tanggal valid
       const kelamin = (item["Kelamin"] || "").trim();
       if (!dailyCounts[tanggal]) {
         dailyCounts[tanggal] = { lakiLaki: 0, perempuan: 0 };
@@ -104,16 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function processDataBulanan(data) {
     const monthlyCounts = {};
     data.forEach(item => {
-      let tanggal = item["Tanggal Kunjungan"];
-      if (!tanggal) return;
-      tanggal = tanggal.trim();
+      let tanggal = (item["Tanggal Kunjungan"] || "").trim();
       if (!tanggal || tanggal === "-") return;
       const parts = tanggal.split('-');
-      if (parts.length < 2) return;
+      if (parts.length < 2) return; // minimal YYYY-MM
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
       const kelamin = (item["Kelamin"] || "").trim();
       if (!monthlyCounts[monthYear]) {
+        // Samakan label kelamin dengan rumus COUNTIF Anda ("Laki - Laki", "Perempuan")
         monthlyCounts[monthYear] = { "Laki - Laki": 0, "Perempuan": 0 };
       }
       if (kelamin === "Laki - Laki" || kelamin === "Laki-Laki") {
@@ -128,13 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsBulanan, dataLakiBulanan, dataPerempuanBulanan };
   }
 
-  // 3. Data Biaya
+  // 3. Total Biaya (BPJS & UMUM)
   function processDataBiaya(data) {
     const biayaCounts = {};
     data.forEach(item => {
-      let tanggal = item["Tanggal Kunjungan"];
-      if (!tanggal) return;
-      tanggal = tanggal.trim();
+      let tanggal = (item["Tanggal Kunjungan"] || "").trim();
       if (!tanggal || tanggal === "-") return;
       const parts = tanggal.split('-');
       if (parts.length < 2) return;
@@ -142,27 +146,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const monthYear = `${year}-${month}`;
       const biaya = (item["Biaya"] || "").trim();
       if (!biayaCounts[monthYear]) {
-        biayaCounts[monthYear] = { BPJS: 0, Umum: 0 };
+        biayaCounts[monthYear] = { BPJS: 0, UMUM: 0 };
       }
       if (biaya === "BPJS") {
         biayaCounts[monthYear].BPJS++;
       } else if (biaya === "UMUM") {
-        biayaCounts[monthYear].Umum++;
+        biayaCounts[monthYear].UMUM++;
       }
     });
     const labelsBiaya = Object.keys(biayaCounts);
     const dataBPJS = labelsBiaya.map(m => biayaCounts[m].BPJS);
-    const dataUmum = labelsBiaya.map(m => biayaCounts[m].Umum);
+    const dataUmum = labelsBiaya.map(m => biayaCounts[m].UMUM);
     return { labelsBiaya, dataBPJS, dataUmum };
   }
 
-  // 4. Data Tindakan (termasuk kategori "Lainnya")
+  // 4. Total Tindakan (termasuk "Lainnya")
   function processDataTindakan(data) {
     const tindakanCounts = {};
     data.forEach(item => {
-      let tanggal = item["Tanggal Kunjungan"];
-      if (!tanggal) return;
-      tanggal = tanggal.trim();
+      let tanggal = (item["Tanggal Kunjungan"] || "").trim();
       if (!tanggal || tanggal === "-") return;
       const parts = tanggal.split('-');
       if (parts.length < 2) return;
@@ -171,21 +173,19 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
 
       // Proses kolom "Tindakan"
-      if (item["Tindakan"]) {
-        const tindakanArray = item["Tindakan"].split(",").map(t => t.trim()).filter(t => t);
+      const rawTindakan = (item["Tindakan"] || "").trim();
+      if (rawTindakan) {
+        const tindakanArray = rawTindakan.split(",").map(t => t.trim()).filter(t => t);
         tindakanArray.forEach(tindakan => {
           tindakanCounts[monthYear][tindakan] = (tindakanCounts[monthYear][tindakan] || 0) + 1;
         });
       }
-      // Sertakan kategori "Lainnya" jika kolom "Lainnya" ada dan valid.
-      if (item["Lainnya"]) {
-        const lainnya = item["Lainnya"].trim();
-        if (lainnya && lainnya !== "-") {
-          tindakanCounts[monthYear]["Lainnya"] = (tindakanCounts[monthYear]["Lainnya"] || 0) + 1;
-        }
+      // Sertakan "Lainnya" jika ada
+      const rawLainnya = (item["Lainnya"] || "").trim();
+      if (rawLainnya && rawLainnya !== "-") {
+        tindakanCounts[monthYear]["Lainnya"] = (tindakanCounts[monthYear]["Lainnya"] || 0) + 1;
       }
     });
-    // Ambil label tindakan secara unik dari seluruh data
     const labelsTindakan = [...new Set(Object.values(tindakanCounts).flatMap(Object.keys))];
     const dataTindakan = labelsTindakan.map(tindakan => {
       return Object.keys(tindakanCounts).reduce((total, m) => total + (tindakanCounts[m][tindakan] || 0), 0);
@@ -193,12 +193,14 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsTindakan, dataTindakan };
   }
 
+  // ===================== Chart Generator =====================
+
   function createChart(canvasId, type, labels, dataLaki, dataPerempuan) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     return new Chart(ctx, {
       type: type,
       data: {
-        labels: labels,
+        labels,
         datasets: [
           {
             label: 'Laki-laki',
@@ -228,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: labels,
+        labels,
         datasets: [
           {
             label: 'BPJS',
@@ -268,10 +270,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: labels,
+        labels,
         datasets: [{
           label: 'Jumlah Tindakan',
-          data: data,
+          data,
           backgroundColor: labels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
           borderColor: labels.map(label => colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)'),
           borderWidth: 1
@@ -289,9 +291,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ===================== Tabel Kunjungan Harian =====================
+
   function populateTable(data) {
     tabelKunjunganBody.innerHTML = '';
     data.forEach(item => {
+      // Sembunyikan tombol Hapus jika tidak ada _id (data dari Sheets)
+      const hasId = !!item._id;
+      const deleteButtonHtml = hasId
+        ? `<button class="delete-button" data-id="${item._id}">Hapus</button>`
+        : ''; 
+
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${item["Tanggal Kunjungan"] || ""}</td>
@@ -301,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${item["Biaya"] || ""}</td>
         <td>${item["Lainnya"] || ""}</td>
         <td>
-          <button class="delete-button" data-id="${item._id}">Hapus</button>
+          ${deleteButtonHtml}
         </td>
       `;
       tabelKunjunganBody.appendChild(row);
@@ -367,6 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  // ===================== Fetch Data =====================
+
   async function fetchData(tanggal = null) {
     try {
       let url = '/api/get-data';
@@ -389,6 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Filter Tanggal
   if (filterTanggalInput) {
     filterTanggalInput.addEventListener('change', async () => {
       const selectedDate = filterTanggalInput.value;
@@ -401,6 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Initial Load
   async function initialLoad() {
     const today = new Date();
     const yyyy = today.getFullYear();
