@@ -74,12 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ======== Fungsi Pemrosesan Data ========
+
+  // 1. Total Pasien Harian
   function processDataHarian(data) {
     const dailyCounts = {};
     data.forEach(item => {
-      const tanggal = item["Tanggal Kunjungan"];
-      const kelamin = item["Kelamin"] ? item["Kelamin"].trim() : "";
-      if (!tanggal || tanggal.trim() === "") return;
+      let tanggal = item["Tanggal Kunjungan"];
+      if (!tanggal) return;
+      tanggal = tanggal.trim();
+      if (!tanggal || tanggal === "-") return;
+      const kelamin = (item["Kelamin"] || "").trim();
       if (!dailyCounts[tanggal]) {
         dailyCounts[tanggal] = { lakiLaki: 0, perempuan: 0 };
       }
@@ -95,15 +100,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsHarian, dataLakiHarian, dataPerempuanHarian };
   }
 
+  // 2. Total Pasien Bulanan
   function processDataBulanan(data) {
     const monthlyCounts = {};
     data.forEach(item => {
-      const tanggal = item["Tanggal Kunjungan"];
-      if (!tanggal || tanggal.trim() === "") return;
-      const [year, month] = tanggal.split('-');
-      if (!year || !month) return;
+      let tanggal = item["Tanggal Kunjungan"];
+      if (!tanggal) return;
+      tanggal = tanggal.trim();
+      if (!tanggal || tanggal === "-") return;
+      const parts = tanggal.split('-');
+      if (parts.length < 2) return;
+      const [year, month] = parts;
       const monthYear = `${year}-${month}`;
-      const kelamin = item["Kelamin"] ? item["Kelamin"].trim() : "";
+      const kelamin = (item["Kelamin"] || "").trim();
       if (!monthlyCounts[monthYear]) {
         monthlyCounts[monthYear] = { "Laki - Laki": 0, "Perempuan": 0 };
       }
@@ -119,15 +128,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsBulanan, dataLakiBulanan, dataPerempuanBulanan };
   }
 
+  // 3. Data Biaya
   function processDataBiaya(data) {
     const biayaCounts = {};
     data.forEach(item => {
-      const tanggal = item["Tanggal Kunjungan"];
-      if (!tanggal || tanggal.trim() === "") return;
-      const [year, month] = tanggal.split('-');
-      if (!year || !month) return;
+      let tanggal = item["Tanggal Kunjungan"];
+      if (!tanggal) return;
+      tanggal = tanggal.trim();
+      if (!tanggal || tanggal === "-") return;
+      const parts = tanggal.split('-');
+      if (parts.length < 2) return;
+      const [year, month] = parts;
       const monthYear = `${year}-${month}`;
-      const biaya = item["Biaya"] ? item["Biaya"].trim() : "";
+      const biaya = (item["Biaya"] || "").trim();
       if (!biayaCounts[monthYear]) {
         biayaCounts[monthYear] = { BPJS: 0, Umum: 0 };
       }
@@ -143,28 +156,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsBiaya, dataBPJS, dataUmum };
   }
 
+  // 4. Data Tindakan (termasuk kategori "Lainnya")
   function processDataTindakan(data) {
     const tindakanCounts = {};
     data.forEach(item => {
-      const tanggal = item["Tanggal Kunjungan"];
-      if (!tanggal || tanggal.trim() === "") return;
-      const [year, month] = tanggal.split('-');
-      if (!year || !month) return;
+      let tanggal = item["Tanggal Kunjungan"];
+      if (!tanggal) return;
+      tanggal = tanggal.trim();
+      if (!tanggal || tanggal === "-") return;
+      const parts = tanggal.split('-');
+      if (parts.length < 2) return;
+      const [year, month] = parts;
       const monthYear = `${year}-${month}`;
+      if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
+
       // Proses kolom "Tindakan"
       if (item["Tindakan"]) {
-        const tindakanArray = item["Tindakan"].split(",").map(t => t.trim());
+        const tindakanArray = item["Tindakan"].split(",").map(t => t.trim()).filter(t => t);
         tindakanArray.forEach(tindakan => {
-          if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
           tindakanCounts[monthYear][tindakan] = (tindakanCounts[monthYear][tindakan] || 0) + 1;
         });
       }
-      // Sertakan kolom "Lainnya" sebagai kategori tindakan, jika ada dan valid.
-      if (item["Lainnya"] && item["Lainnya"].trim() !== "" && item["Lainnya"].trim() !== "-") {
-        if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
-        tindakanCounts[monthYear]["Lainnya"] = (tindakanCounts[monthYear]["Lainnya"] || 0) + 1;
+      // Sertakan kategori "Lainnya" jika kolom "Lainnya" ada dan valid.
+      if (item["Lainnya"]) {
+        const lainnya = item["Lainnya"].trim();
+        if (lainnya && lainnya !== "-") {
+          tindakanCounts[monthYear]["Lainnya"] = (tindakanCounts[monthYear]["Lainnya"] || 0) + 1;
+        }
       }
     });
+    // Ambil label tindakan secara unik dari seluruh data
     const labelsTindakan = [...new Set(Object.values(tindakanCounts).flatMap(Object.keys))];
     const dataTindakan = labelsTindakan.map(tindakan => {
       return Object.keys(tindakanCounts).reduce((total, m) => total + (tindakanCounts[m][tindakan] || 0), 0);
@@ -242,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'Tambal Tetap': 'rgba(153, 102, 255, 0.7)',
       'Scaling': 'rgba(255, 159, 64, 0.7)',
       'Rujuk': 'rgba(255, 0, 0, 0.7)',
-      'Lainnya': 'rgba(201, 203, 207, 0.7)' // Warna khusus untuk kategori "Lainnya"
+      'Lainnya': 'rgba(201, 203, 207, 0.7)'
     };
     return new Chart(ctx, {
       type: 'bar',
@@ -273,12 +294,12 @@ document.addEventListener('DOMContentLoaded', () => {
     data.forEach(item => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${item["Tanggal Kunjungan"] || "-"}</td>
-        <td>${item["Nama Pasien"] || "-"}</td>
-        <td>${item["No.RM"] || "-"}</td>
-        <td>${item["Tindakan"] || "-"}</td>
-        <td>${item["Biaya"] || "-"}</td>
-        <td>${item["Lainnya"] || "-"}</td>
+        <td>${item["Tanggal Kunjungan"] || ""}</td>
+        <td>${item["Nama Pasien"] || ""}</td>
+        <td>${item["No.RM"] || ""}</td>
+        <td>${item["Tindakan"] || ""}</td>
+        <td>${item["Biaya"] || ""}</td>
+        <td>${item["Lainnya"] || ""}</td>
         <td>
           <button class="delete-button" data-id="${item._id}">Hapus</button>
         </td>
