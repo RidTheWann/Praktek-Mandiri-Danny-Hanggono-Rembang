@@ -16,8 +16,9 @@ const client = new MongoClient(mongodbUri);
 
 /**
  * Mengambil data dari SEMUA sheet di Google Sheets (range A1:N).
- * - Setiap baris diberi properti `sheetInfo` (JSON) agar bisa dihapus dari Sheets (jika Anda mengimplementasikan di delete-data.js).
+ * - Setiap baris diberi properti `sheetInfo` (JSON) agar bisa dihapus dari Sheets (jika Anda implementasikan di delete-data.js).
  * - Baris tanpa "Tanggal Kunjungan" valid di-skip (termasuk format aneh seperti "2025-08-00").
+ * - Baris yang hanya punya tanggal tetapi "Nama Pasien" kosong juga di-skip (mencegah baris misterius).
  * - Kolom Obat, Cabut Anak, dll. digabung menjadi satu kolom "Tindakan".
  */
 async function getAllSheetsData(queryParams) {
@@ -38,7 +39,7 @@ async function getAllSheetsData(queryParams) {
 
     for (const sheetName of sheetNames) {
       try {
-        // Range sampai kolom N
+        // Range sampai kolom N (A1:N)
         const range = `'${sheetName}'!A1:N`;
         const result = await sheetsApi.spreadsheets.values.get({
           spreadsheetId,
@@ -72,6 +73,11 @@ async function getAllSheetsData(queryParams) {
           // 3) Cek day bukan "00"
           const [yyyy, mm, dd] = tgl.split("-");
           if (dd === "00") return false;
+
+          // **Filter tambahan**: Pastikan kolom "Nama Pasien" tidak kosong
+          const nama = (obj["Nama Pasien"] || "").trim();
+          if (!nama) return false;
+
           return true;
         });
 
@@ -154,10 +160,10 @@ export default async function handler(req, res) {
       query["Tanggal Kunjungan"] = { $regex: `^${month}` };
     }
 
-    // Data MongoDB
+    // Data dari MongoDB
     const mongoData = await db.collection('Data Pasien').find(query).toArray();
 
-    // Data Google Sheets
+    // Data dari Google Sheets
     const sheetData = await getAllSheetsData({ tanggal, month });
 
     // Gabung & deduplikasi
