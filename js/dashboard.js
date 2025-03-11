@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmButton.style.display = 'none';
       cancelButton.style.display = 'none';
       // Tampilkan teks dengan spinner di bawahnya
-      modalMessage.innerHTML = "Menghapus data...<br><div class='spinner'></div>";
+      modalMessage.innerHTML = "Menghapus data<br><div class='spinner'></div>";
   
       // Optimistically hapus baris dari tampilan
       rowElement.remove();
