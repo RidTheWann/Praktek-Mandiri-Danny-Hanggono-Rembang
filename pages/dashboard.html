@@ -16,20 +16,25 @@
     <div class="navbar-brand">
       <i class="fa-solid fa-tooth"></i> drg. Danny H - Dashboard
     </div>
-    <button id="backToHome" class="back-button"><i class="fas fa-arrow-left"></i> Kembali</button>
+    <button id="backToHome" class="back-button">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
   </nav>
 
   <div class="container">
     <div class="sidebar">
       <ul>
-        <li><a href="#" data-section="kunjungan-harian"><i class="fas fa-table"></i> Kunjungan Harian</a></li>
-        <li><a href="#" data-section="total-pasien-harian" class="active"><i class="fas fa-user-friends"></i>
-            Total Pasien Harian</a></li>
-        <li><a href="#" data-section="total-pasien-bulanan"><i class="fas fa-calendar-alt"></i> Total Pasien
-            Bulanan</a></li>
-        <li><a href="#" data-section="total-biaya"><i class="fas fa-money-bill-wave"></i> Total Biaya (BPJS &
-            UMUM)</a></li>
-        <li><a href="#" data-section="total-tindakan"><i class="fas fa-syringe"></i> Total Tindakan</a></li>
+        <!-- Kunjungan Harian diletakkan paling atas dan aktif secara default -->
+        <li><a href="#" data-section="kunjungan-harian" class="active">
+            <i class="fas fa-table"></i> Kunjungan Harian</a></li>
+        <li><a href="#" data-section="total-pasien-harian">
+            <i class="fas fa-user-friends"></i> Total Pasien Harian</a></li>
+        <li><a href="#" data-section="total-pasien-bulanan">
+            <i class="fas fa-calendar-alt"></i> Total Pasien Bulanan</a></li>
+        <li><a href="#" data-section="total-biaya">
+            <i class="fas fa-money-bill-wave"></i> Total Biaya (BPJS & UMUM)</a></li>
+        <li><a href="#" data-section="total-tindakan">
+            <i class="fas fa-syringe"></i> Total Tindakan</a></li>
       </ul>
     </div>
     <div class="menu-toggle">
@@ -37,7 +42,8 @@
     </div>
 
     <div class="main-content">
-      <section id="total-pasien-harian" class="chart-section active">
+      <!-- Section untuk chart (non default) -->
+      <section id="total-pasien-harian" class="chart-section">
         <h2>Total Pasien Harian</h2>
         <canvas id="chartPasienHarian"></canvas>
       </section>
@@ -54,7 +60,8 @@
         <canvas id="chartTindakan"></canvas>
       </section>
 
-      <section id="kunjungan-harian" class="table-section">
+      <!-- Section untuk tabel (default tampil) -->
+      <section id="kunjungan-harian" class="table-section active">
         <h2>Kunjungan Harian</h2>
         <label for="filter-tanggal">Pilih Tanggal:</label>
         <input type="date" id="filter-tanggal">
@@ -71,12 +78,13 @@
                 <th>Lainnya</th>
                 <th>Aksi</th>
               </tr>
-            </thead>            
+            </thead>
             <tbody></tbody>
           </table>
         </div>
       </section>
     </div>
+    
     <div class="modal-overlay" id="deleteConfirmationModal">
       <div class="modal-content">
         <p id="modal-message">Apakah Anda yakin ingin menghapus data ini?</p>
