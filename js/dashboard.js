@@ -50,10 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let chartBiayaInstance = null;
   let chartTindakanInstance = null;
 
-  // Caching: Durasi cache dikurangi ke 30 detik (30000 ms)
+  // Caching: Perpanjang cache selama 10 detik
   async function fetchData(tanggal = null) {
     const cacheKey = tanggal ? `data_${tanggal}` : "data_all";
-    const cacheExpiry = 30000; // 30 detik
+    const cacheExpiry = 10000; // 10 detik
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
       if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
-
+  
       const rawTindakan = (item["Tindakan"] || "").trim();
       if (rawTindakan) {
         const tindakanArray = rawTindakan.split(",").map(t => t.trim()).filter(Boolean);
@@ -390,19 +390,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
   
-  // ========== Polling: update data setiap 30 detik ==========
+  // ========== Polling: update data setiap 10 detik ==========
   function startPolling() {
-    // Interval polling 30 detik (30000 ms)
     setInterval(async () => {
       const data = await fetchData(filterTanggalInput.value || null);
       populateTable(data);
-      // Update chart sesuai dengan section aktif
       const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
       if (activeSection && activeSection.id.startsWith('total-')) {
         updateCharts(activeSection.id);
       }
-      console.log("Data di-polling dan dashboard di-update.");
-    }, 30000);
+      console.log("Polling: Data dashboard diperbarui.");
+    }, 10000); // 10 detik
   }
   
   if (filterTanggalInput) {
@@ -436,7 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Tidak ada data yang tersedia.');
       tabelKunjunganBody.innerHTML = '<tr><td colspan="7">Tidak ada data kunjungan.</td></tr>';
     }
-    // Mulai polling data setiap 30 detik
     startPolling();
   }
   
