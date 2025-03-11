@@ -344,22 +344,30 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleDelete(event) {
     const idToDelete = event.target.dataset.id;
     const rowElement = event.target.closest('tr');
-    // Simpan cadangan HTML untuk rollback
+    // Simpan cadangan HTML baris untuk rollback jika penghapusan gagal
     const backupRowHTML = rowElement.outerHTML;
-
+  
     const modal = document.getElementById('deleteConfirmationModal');
     const confirmButton = document.getElementById('confirmDelete');
     const cancelButton = document.getElementById('cancelDelete');
     const modalMessage = document.getElementById('modal-message');
-
+  
+    // Tampilkan modal konfirmasi
     modal.style.display = 'flex';
-    modalMessage.textContent = "Menghapus data...";
-    confirmButton.disabled = true;
-
-    // Optimistically hapus baris dari tampilan
-    rowElement.remove();
-
+    modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
+    // Reset status tombol
+    confirmButton.disabled = false;
+    cancelButton.textContent = 'Batal';
+  
+    // Event handler untuk konfirmasi hapus
     confirmButton.onclick = async () => {
+      // Disable tombol confirm agar tidak diklik ulang
+      confirmButton.disabled = true;
+      modalMessage.textContent = "Menghapus data...";
+  
+      // Optimistic update: hapus baris dari tampilan
+      rowElement.remove();
+  
       try {
         const response = await fetch(`/api/delete-data?index=${idToDelete}`, { method: 'DELETE' });
         if (!response.ok) {
@@ -370,9 +378,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.status !== "success") {
           throw new Error(result.message || "Gagal menghapus data di server");
         }
+        // Jika berhasil, tampilkan pesan sukses
         modalMessage.textContent = 'Data berhasil dihapus.';
       } catch (error) {
-        // Rollback: Kembalikan baris yang sudah dihapus
+        // Rollback: kembalikan baris yang telah dihapus
         const temp = document.createElement('tbody');
         temp.innerHTML = backupRowHTML;
         tabelKunjunganBody.appendChild(temp.firstElementChild);
@@ -382,13 +391,14 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelButton.textContent = 'OK';
         cancelButton.onclick = () => {
           modal.style.display = 'none';
+          // Reset pesan modal untuk penggunaan selanjutnya
           modalMessage.textContent = 'Apakah Anda yakin ingin menghapus data ini?';
         };
       }
     };
-
+  
+    // Jika pembatalan, pastikan rollback jika baris sudah dihapus
     cancelButton.onclick = () => {
-      // Jika dibatalkan, rollback jika baris belum ada di tampilan
       if (!document.body.contains(rowElement)) {
         const temp = document.createElement('tbody');
         temp.innerHTML = backupRowHTML;
@@ -397,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
       modal.style.display = 'none';
     };
   }
+  
 
   // ======= Polling: Update Data setiap 10 detik =======
   function startPolling() {
