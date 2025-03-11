@@ -321,34 +321,30 @@ body {
 
 /* --- Modal Styling --- */
 .modal-overlay {
+    display: none; /* disembunyikan secara default */
     position: fixed;
-    /* Tetap di tempat, menutupi seluruh layar */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    /* Semi-transparan hitam */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    /* Di atas semua elemen lain */
-    display: none;
-    /* Sembunyikan secara default */
-}
-
-.modal-content {
-    background-color: var(--container-bg);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px var(--shadow-color);
-    text-align: center;
-    max-width: 90%;
-    /* Batasi lebar */
-    width: 400px;
-    /* Lebar tetap */
-}
+    backdrop-filter: blur(8px); /* mengaburkan latar belakang */
+    background-color: rgba(0, 0, 0, 0.3); /* bisa diatur agar ada overlay gelap */
+    z-index: 1000;
+  }
+  
+  /* Modal Content tanpa border box */
+  .modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.9); /* latar belakang putih transparan */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: none; /* menghilangkan bayangan */
+    border: none; /* menghilangkan border */
+    z-index: 1001;
+  }
 
 .modal-buttons {
     margin-top: 20px;
