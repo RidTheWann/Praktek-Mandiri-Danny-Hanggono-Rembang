@@ -434,12 +434,12 @@ body {
     border-radius: 50%;
     border-left-color: #09f;
     animation: spin 1s linear infinite;
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 8px;
+    display: block; /* Pastikan spinner tampil sebagai block element */
+    margin: 8px auto 0; /* Margin atas 8px dan center secara horizontal */
   }
   
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+  
   
