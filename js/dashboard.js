@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
       row.innerHTML = `
         <td>${item["Tanggal Kunjungan"] || ""}</td>
         <td>${item["Nama Pasien"] || ""}</td>
-        <td>${item["No.RM"] || "-"}</td>
+        <td>${item["No.RM"] || ""}</td>
         <td>${item["Tindakan"] || ""}</td>
         <td>${item["Biaya"] || ""}</td>
         <td>${item["Lainnya"] || ""}</td>

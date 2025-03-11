@@ -16,14 +16,14 @@ const client = new MongoClient(mongodbUri);
 
 /**
  * Mengambil data dari SEMUA sheet di Google Sheets (range A1:N).
- * - Setiap baris diberi properti `sheetInfo` (JSON) agar bisa dihapus dari Sheets (jika Anda implementasikan di delete-data.js).
- * - Baris tanpa "Tanggal Kunjungan" valid di-skip (termasuk format aneh seperti "2025-08-00").
- * - Baris yang hanya punya tanggal tetapi "Nama Pasien" kosong juga di-skip (mencegah baris misterius).
- * - Kolom Obat, Cabut Anak, dll. digabung menjadi satu kolom "Tindakan".
+ * - Setiap baris diberi properti `sheetInfo` (JSON) agar bisa dihapus dari Sheets.
+ * - Baris tanpa "Tanggal Kunjungan" valid di-skip (termasuk format aneh seperti "2025-08-00")
+ *   dan juga baris yang kolom "Nama Pasien" kosong.
+ * - Kolom Obat, Cabut Anak, Cabut Dewasa, Tambal Sementara, Tambal Tetap, Scaling, dan Rujuk
+ *   digabung menjadi satu kolom "Tindakan". Jika nilainya selain "yes/ya", maka tampilkan juga nilai.
  */
 async function getAllSheetsData(queryParams) {
   try {
-    // Autentikasi Google
     const googleCredentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
     const auth = new google.auth.GoogleAuth({
       credentials: googleCredentials,
@@ -39,7 +39,7 @@ async function getAllSheetsData(queryParams) {
 
     for (const sheetName of sheetNames) {
       try {
-        // Range sampai kolom N (A1:N)
+        // Range A1:N mencakup kolom yang diperlukan
         const range = `'${sheetName}'!A1:N`;
         const result = await sheetsApi.spreadsheets.values.get({
           spreadsheetId,
@@ -49,46 +49,43 @@ async function getAllSheetsData(queryParams) {
         if (!rows || rows.length === 0) continue;
 
         const header = rows[0];
-        // Data mulai baris 2
+        // Data mulai dari baris 2; tambahkan properti sheetInfo untuk penghapusan
         let data = rows.slice(1).map((row, index) => {
           const obj = {};
           header.forEach((colName, i) => {
             obj[colName] = row[i] || "";
           });
-          // Tambahkan sheetInfo (opsional) untuk penghapusan di Sheets
           obj.sheetInfo = JSON.stringify({
             sheetName,
-            rowIndex: index + 2, // +2 karena baris 1 = header
+            rowIndex: index + 2, // +2 karena baris 1 adalah header
           });
           return obj;
         });
 
-        // Filter baris tanpa "Tanggal Kunjungan" valid
+        // Filter: Hanya ambil baris dengan "Tanggal Kunjungan" yang valid
         data = data.filter(obj => {
           const tgl = (obj["Tanggal Kunjungan"] || "").trim();
-          // 1) Pastikan tidak kosong atau "-"
+          // Pastikan Tanggal Kunjungan tidak kosong atau "-"
           if (!tgl || tgl === "-") return false;
-          // 2) Pastikan format YYYY-MM-DD (regex)
+          // Format harus YYYY-MM-DD
           if (!/^\d{4}-\d{2}-\d{2}$/.test(tgl)) return false;
-          // 3) Cek day bukan "00"
+          // Cek bahwa day tidak "00"
           const [yyyy, mm, dd] = tgl.split("-");
           if (dd === "00") return false;
-
-          // **Filter tambahan**: Pastikan kolom "Nama Pasien" tidak kosong
+          // Pastikan "Nama Pasien" tidak kosong
           const nama = (obj["Nama Pasien"] || "").trim();
           if (!nama) return false;
-
           return true;
         });
 
-        // Gabungkan kolom-kolom tindakan jadi satu kolom "Tindakan"
+        // Gabungkan kolom tindakan menjadi satu kolom "Tindakan"
         const tindakanFields = [
-          "Obat",
-          "Cabut Anak",
-          "Cabut Dewasa",
-          "Tambal Sementara",
-          "Tambal Tetap",
-          "Scaling",
+          "Obat", 
+          "Cabut Anak", 
+          "Cabut Dewasa", 
+          "Tambal Sementara", 
+          "Tambal Tetap", 
+          "Scaling", 
           "Rujuk"
         ];
         data.forEach(obj => {
@@ -96,9 +93,15 @@ async function getAllSheetsData(queryParams) {
           tindakanFields.forEach(field => {
             const val = (obj[field] || "").trim();
             if (val && val.toLowerCase() !== "no") {
-              arr.push(field);
+              // Jika nilai adalah "yes" atau "ya", cukup tampilkan nama field
+              if (val.toLowerCase() === "yes" || val.toLowerCase() === "ya") {
+                arr.push(field);
+              } else {
+                // Tampilkan nama field beserta nilai (misalnya "Obat (2x)")
+                arr.push(`${field} (${val})`);
+              }
             }
-            // Hapus kolom aslinya
+            // Hapus kolom asli
             delete obj[field];
           });
           if (arr.length > 0) {
@@ -112,7 +115,7 @@ async function getAllSheetsData(queryParams) {
       }
     }
 
-    // Filter ?tanggal=YYYY-MM-DD atau ?month=YYYY-MM
+    // Filter berdasarkan query parameter: ?tanggal=YYYY-MM-DD atau ?month=YYYY-MM
     const { tanggal, month } = queryParams;
     if (tanggal) {
       allData = allData.filter(item => item["Tanggal Kunjungan"] === tanggal);
@@ -130,7 +133,7 @@ async function getAllSheetsData(queryParams) {
 
 /**
  * Deduplikasi berdasarkan (Tanggal Kunjungan + No.RM).
- * Jika No.RM kosong, maka kunci unik hanya berdasarkan tanggal.
+ * Jika No.RM kosong, kunci unik hanya berdasarkan Tanggal Kunjungan.
  */
 function deduplicateData(data) {
   const seen = new Set();
@@ -162,11 +165,10 @@ export default async function handler(req, res) {
 
     // Data dari MongoDB
     const mongoData = await db.collection('Data Pasien').find(query).toArray();
-
     // Data dari Google Sheets
     const sheetData = await getAllSheetsData({ tanggal, month });
 
-    // Gabung & deduplikasi
+    // Gabungkan dan deduplikasi
     let combinedData = [...mongoData, ...sheetData];
     combinedData = deduplicateData(combinedData);
 
