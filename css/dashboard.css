@@ -321,30 +321,34 @@ body {
 
 /* --- Modal Styling --- */
 .modal-overlay {
-    display: none; /* disembunyikan secara default */
+    display: none; /* Sembunyikan secara default */
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    backdrop-filter: blur(8px); /* mengaburkan latar belakang */
-    background-color: rgba(0, 0, 0, 0.3); /* bisa diatur agar ada overlay gelap */
+    /* Efek blur dan background semi-transparan */
+    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.2);
     z-index: 1000;
   }
   
-  /* Modal Content tanpa border box */
+  /* Modal Content: tanpa border box */
   .modal-content {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(255, 255, 255, 0.9); /* latar belakang putih transparan */
+    background-color: rgba(0, 0, 0, 0.709);
     padding: 20px;
+    border: none;
     border-radius: 8px;
-    box-shadow: none; /* menghilangkan bayangan */
-    border: none; /* menghilangkan border */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     z-index: 1001;
+    max-width: 90%;
+    width: 400px;
   }
+  
 
 .modal-buttons {
     margin-top: 20px;
@@ -424,14 +428,14 @@ body {
 }
 
 .spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 24px;
-    height: 24px;
+    border: 6px solid rgba(0, 0, 0, 0.1);
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border-left-color: #09f;
     animation: spin 1s linear infinite;
     display: block;
-    margin: 16px auto 0; /* Margin atas 16px agar ada jarak yang lebih */
+    margin: 16px auto 0; /* Memberikan jarak lebih dari teks */
   }
   
   @keyframes spin {
