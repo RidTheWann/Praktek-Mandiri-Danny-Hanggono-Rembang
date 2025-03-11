@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const sidebarLinks = document.querySelectorAll('.sidebar a');
   const chartSections = document.querySelectorAll('.chart-section');
-  const tableSection = document.getElementById('kunjungan-harian');
+  const tableSection = document.getElementById('kunjungan-harian');  // Bagian Tabel Kunjungan
   const tabelKunjunganBody = document.querySelector('#tabelKunjungan tbody');
   const backToHomeBtn = document.getElementById('backToHome');
   const menuToggle = document.querySelector('.menu-toggle');
@@ -34,7 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
       showSection(sectionId);
       sidebarLinks.forEach(l => l.classList.remove('active'));
       link.classList.add('active');
-      if (sectionId.startsWith('total-')) updateCharts(sectionId);
+      // Jika section chart (total-...), panggil updateCharts
+      if (sectionId.startsWith('total-')) {
+        updateCharts(sectionId);
+      }
     });
   });
 
@@ -45,12 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- Chart Instances (untuk destroy sebelum buat baru) ---
   let chartPasienHarianInstance = null;
   let chartPasienBulananInstance = null;
   let chartBiayaInstance = null;
   let chartTindakanInstance = null;
 
-  // Caching: Perpanjang cache selama 10 detik
+  // ========== Caching Data dengan localStorage (10 detik) ==========
   async function fetchData(tanggal = null) {
     const cacheKey = tanggal ? `data_${tanggal}` : "data_all";
     const cacheExpiry = 10000; // 10 detik
@@ -71,7 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const result = await response.json();
-      localStorage.setItem(cacheKey, JSON.stringify({ timestamp: new Date().getTime(), data: result.data }));
+      localStorage.setItem(cacheKey, JSON.stringify({
+        timestamp: new Date().getTime(),
+        data: result.data
+      }));
       return result.data;
     } catch (error) {
       console.error("Gagal mengambil data:", error);
@@ -83,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ========== Update Chart sesuai Section ==========
   async function updateCharts(sectionId) {
     try {
       const data = await fetchData();
@@ -190,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
       if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
-  
+
       const rawTindakan = (item["Tindakan"] || "").trim();
       if (rawTindakan) {
         const tindakanArray = rawTindakan.split(",").map(t => t.trim()).filter(Boolean);
@@ -211,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ========== Chart Generators ==========
-  
   function createChart(canvasId, type, labels, dataLaki, dataPerempuan) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     return new Chart(ctx, {
@@ -241,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  
+
   function createChartBiaya(canvasId, labels, dataBPJS, dataUmum) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     return new Chart(ctx, {
@@ -271,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  
+
   function createChartTindakan(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     const colorMap = {
@@ -307,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  
+
   // ========== Populate Tabel Kunjungan Harian ==========
   function populateTable(data) {
     tabelKunjunganBody.innerHTML = '';
@@ -331,23 +338,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     addDeleteButtonListeners();
   }
-  
+
   function addDeleteButtonListeners() {
     const deleteButtons = document.querySelectorAll('.delete-button');
     deleteButtons.forEach(button => {
       button.addEventListener('click', handleDelete);
     });
   }
-  
+
   async function handleDelete(event) {
     const idToDelete = event.target.dataset.id;
     const modal = document.getElementById('deleteConfirmationModal');
     const confirmButton = document.getElementById('confirmDelete');
     const cancelButton = document.getElementById('cancelDelete');
     const modalMessage = document.getElementById('modal-message');
-  
+
     modal.style.display = 'flex';
-  
+
     confirmButton.onclick = async () => {
       try {
         const response = await fetch(`/api/delete-data?index=${idToDelete}`, { method: 'DELETE' });
@@ -384,12 +391,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
     };
-  
+
     cancelButton.onclick = () => {
       modal.style.display = 'none';
     };
   }
-  
+
   // ========== Polling: update data setiap 10 detik ==========
   function startPolling() {
     setInterval(async () => {
@@ -399,22 +406,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (activeSection && activeSection.id.startsWith('total-')) {
         updateCharts(activeSection.id);
       }
-      console.log("Polling: Data dashboard diperbarui.");
-    }, 10000); // 10 detik
+      console.log("Polling: Data dashboard diperbarui (10 detik).");
+    }, 10000);
   }
-  
-  if (filterTanggalInput) {
-    filterTanggalInput.addEventListener('change', async () => {
-      const selectedDate = filterTanggalInput.value;
-      const filteredData = await fetchData(selectedDate);
-      populateTable(filteredData);
-      const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
-      if (activeSection && activeSection.id === 'total-pasien-harian') {
-        updateCharts(activeSection.id);
-      }
-    });
-  }
-  
+
   async function initialLoad() {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -426,16 +421,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const data = await fetchData(filterTanggalInput.value || null);
     if (data.length > 0) {
+      // Tampilkan data di Kunjungan Harian
       populateTable(data);
-      showSection('total-pasien-harian');
-      updateCharts('total-pasien-harian');
-      sidebarLinks[0].classList.add('active');
+      // Pastikan link "Kunjungan Harian" di sidebar jadi active
+      const kunjunganLink = [...sidebarLinks].find(link => link.dataset.section === 'kunjungan-harian');
+      if (kunjunganLink) {
+        sidebarLinks.forEach(l => l.classList.remove('active'));
+        kunjunganLink.classList.add('active');
+      }
+      // Tampilkan section Kunjungan Harian
+      showSection('kunjungan-harian');
     } else {
       console.log('Tidak ada data yang tersedia.');
-      tabelKunjunganBody.innerHTML = '<tr><td colspan="7">Tidak ada data kunjungan.</td></tr>';
+      tabelKunjunganBody.innerHTML = '<tr><td colspan="8">Tidak ada data kunjungan.</td></tr>';
     }
+    // Mulai polling data setiap 10 detik
     startPolling();
   }
-  
+
   initialLoad();
 });
