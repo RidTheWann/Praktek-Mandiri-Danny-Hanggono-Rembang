@@ -284,27 +284,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // ========== Populate Tabel Kunjungan Harian ==========
   function populateTable(data) {
     tabelKunjunganBody.innerHTML = '';
+    let counter = 1;
     data.forEach(item => {
-      // Gunakan _id jika data MongoDB, atau item.sheetInfo jika data Sheets
+      // Gunakan _id jika data MongoDB, atau item.sheetInfo jika data dari Google Sheets.
       const deleteId = item._id || item.sheetInfo;
       const row = document.createElement('tr');
       row.innerHTML = `
+        <td>${counter++}</td>
         <td>${item["Tanggal Kunjungan"] || ""}</td>
         <td>${item["Nama Pasien"] || ""}</td>
-        <td>${item["No.RM"] || ""}</td>
+        <td>${item["No.RM"] || "-"}</td>
         <td>${item["Tindakan"] || ""}</td>
         <td>${item["Biaya"] || ""}</td>
         <td>${item["Lainnya"] || ""}</td>
         <td>
-          <button class="delete-button" data-id='${deleteId}'>Hapus</button>
+          <button class="delete-button" data-id="${deleteId}">Hapus</button>
         </td>
       `;
       tabelKunjunganBody.appendChild(row);
     });
     addDeleteButtonListeners();
   }
-  
-  
+
+
+
 
   function addDeleteButtonListeners() {
     const deleteButtons = document.querySelectorAll('.delete-button');
