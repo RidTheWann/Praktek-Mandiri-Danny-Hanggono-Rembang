@@ -50,6 +50,39 @@ document.addEventListener('DOMContentLoaded', () => {
   let chartBiayaInstance = null;
   let chartTindakanInstance = null;
 
+  // Caching: Durasi cache dikurangi ke 30 detik (30000 ms)
+  async function fetchData(tanggal = null) {
+    const cacheKey = tanggal ? `data_${tanggal}` : "data_all";
+    const cacheExpiry = 30000; // 30 detik
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (new Date().getTime() - parsed.timestamp < cacheExpiry) {
+        return parsed.data;
+      }
+    }
+    try {
+      let url = '/api/get-data';
+      if (tanggal) {
+        url += `?tanggal=${tanggal}`;
+      }
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      localStorage.setItem(cacheKey, JSON.stringify({ timestamp: new Date().getTime(), data: result.data }));
+      return result.data;
+    } catch (error) {
+      console.error("Gagal mengambil data:", error);
+      const errorDiv = document.createElement('div');
+      errorDiv.textContent = "Gagal mengambil data dari server. Pastikan server berjalan dan coba muat ulang halaman.";
+      errorDiv.style.color = 'red';
+      document.body.appendChild(errorDiv);
+      return [];
+    }
+  }
+
   async function updateCharts(sectionId) {
     try {
       const data = await fetchData();
@@ -76,20 +109,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ========== PEMROSESAN DATA ==========
-  // 1. Data Harian
   function processDataHarian(data) {
     const dailyCounts = {};
     data.forEach(item => {
-      let tanggal = (item["Tanggal Kunjungan"] || "").trim();
-      if (!tanggal || tanggal === "-") return;
+      const tgl = (item["Tanggal Kunjungan"] || "").trim();
+      if (!tgl || tgl === "-") return;
       const kelamin = (item["Kelamin"] || "").trim();
-      if (!dailyCounts[tanggal]) {
-        dailyCounts[tanggal] = { lakiLaki: 0, perempuan: 0 };
+      if (!dailyCounts[tgl]) {
+        dailyCounts[tgl] = { lakiLaki: 0, perempuan: 0 };
       }
       if (kelamin === "Laki - Laki" || kelamin === "Laki-Laki") {
-        dailyCounts[tanggal].lakiLaki++;
+        dailyCounts[tgl].lakiLaki++;
       } else if (kelamin === "Perempuan") {
-        dailyCounts[tanggal].perempuan++;
+        dailyCounts[tgl].perempuan++;
       }
     });
     const labelsHarian = Object.keys(dailyCounts);
@@ -98,13 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsHarian, dataLakiHarian, dataPerempuanHarian };
   }
 
-  // 2. Data Bulanan
   function processDataBulanan(data) {
     const monthlyCounts = {};
     data.forEach(item => {
-      let tanggal = (item["Tanggal Kunjungan"] || "").trim();
-      if (!tanggal || tanggal === "-") return;
-      const parts = tanggal.split('-');
+      const tgl = (item["Tanggal Kunjungan"] || "").trim();
+      if (!tgl || tgl === "-") return;
+      const parts = tgl.split('-');
       if (parts.length < 2) return;
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
@@ -124,13 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsBulanan, dataLakiBulanan, dataPerempuanBulanan };
   }
 
-  // 3. Data Biaya
   function processDataBiaya(data) {
     const biayaCounts = {};
     data.forEach(item => {
-      let tanggal = (item["Tanggal Kunjungan"] || "").trim();
-      if (!tanggal || tanggal === "-") return;
-      const parts = tanggal.split('-');
+      const tgl = (item["Tanggal Kunjungan"] || "").trim();
+      if (!tgl || tgl === "-") return;
+      const parts = tgl.split('-');
       if (parts.length < 2) return;
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
@@ -150,19 +180,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return { labelsBiaya, dataBPJS, dataUmum };
   }
 
-  // 4. Data Tindakan (termasuk "Lainnya")
   function processDataTindakan(data) {
     const tindakanCounts = {};
     data.forEach(item => {
-      let tanggal = (item["Tanggal Kunjungan"] || "").trim();
-      if (!tanggal || tanggal === "-") return;
-      const parts = tanggal.split('-');
+      const tgl = (item["Tanggal Kunjungan"] || "").trim();
+      if (!tgl || tgl === "-") return;
+      const parts = tgl.split('-');
       if (parts.length < 2) return;
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
       if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
 
-      // Proses kolom "Tindakan"
       const rawTindakan = (item["Tindakan"] || "").trim();
       if (rawTindakan) {
         const tindakanArray = rawTindakan.split(",").map(t => t.trim()).filter(Boolean);
@@ -170,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
           tindakanCounts[monthYear][tindakan] = (tindakanCounts[monthYear][tindakan] || 0) + 1;
         });
       }
-      // Sertakan "Lainnya" jika kolom "Lainnya" ada dan tidak kosong
       const rawLainnya = (item["Lainnya"] || "").trim();
       if (rawLainnya && rawLainnya !== "-") {
         tindakanCounts[monthYear]["Lainnya"] = (tindakanCounts[monthYear]["Lainnya"] || 0) + 1;
@@ -184,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ========== Chart Generators ==========
-
+  
   function createChart(canvasId, type, labels, dataLaki, dataPerempuan) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     return new Chart(ctx, {
@@ -214,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
+  
   function createChartBiaya(canvasId, labels, dataBPJS, dataUmum) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     return new Chart(ctx, {
@@ -244,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
+  
   function createChartTindakan(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     const colorMap = {
@@ -280,13 +307,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
+  
   // ========== Populate Tabel Kunjungan Harian ==========
   function populateTable(data) {
     tabelKunjunganBody.innerHTML = '';
     let counter = 1;
     data.forEach(item => {
-      // Gunakan _id jika data MongoDB, atau item.sheetInfo jika data dari Google Sheets.
       const deleteId = item._id || item.sheetInfo;
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -305,29 +331,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     addDeleteButtonListeners();
   }
-
-
-
-
+  
   function addDeleteButtonListeners() {
     const deleteButtons = document.querySelectorAll('.delete-button');
     deleteButtons.forEach(button => {
       button.addEventListener('click', handleDelete);
     });
   }
-
+  
   async function handleDelete(event) {
     const idToDelete = event.target.dataset.id;
     const modal = document.getElementById('deleteConfirmationModal');
     const confirmButton = document.getElementById('confirmDelete');
     const cancelButton = document.getElementById('cancelDelete');
     const modalMessage = document.getElementById('modal-message');
-
+  
     modal.style.display = 'flex';
-
+  
     confirmButton.onclick = async () => {
       try {
-        // Endpoint delete-data harus mendukung penghapusan untuk MongoDB dan Google Sheets.
         const response = await fetch(`/api/delete-data?index=${idToDelete}`, { method: 'DELETE' });
         if (!response.ok) {
           const errorData = await response.json();
@@ -362,34 +384,27 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
     };
-
+  
     cancelButton.onclick = () => {
       modal.style.display = 'none';
     };
   }
-
-  async function fetchData(tanggal = null) {
-    try {
-      let url = '/api/get-data';
-      if (tanggal) {
-        url += `?tanggal=${tanggal}`;
+  
+  // ========== Polling: update data setiap 30 detik ==========
+  function startPolling() {
+    // Interval polling 30 detik (30000 ms)
+    setInterval(async () => {
+      const data = await fetchData(filterTanggalInput.value || null);
+      populateTable(data);
+      // Update chart sesuai dengan section aktif
+      const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
+      if (activeSection && activeSection.id.startsWith('total-')) {
+        updateCharts(activeSection.id);
       }
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data.data;
-    } catch (error) {
-      console.error("Gagal mengambil data:", error);
-      const errorDiv = document.createElement('div');
-      errorDiv.textContent = "Gagal mengambil data dari server. Pastikan server berjalan dan coba muat ulang halaman.";
-      errorDiv.style.color = 'red';
-      document.body.appendChild(errorDiv);
-      return [];
-    }
+      console.log("Data di-polling dan dashboard di-update.");
+    }, 30000);
   }
-
+  
   if (filterTanggalInput) {
     filterTanggalInput.addEventListener('change', async () => {
       const selectedDate = filterTanggalInput.value;
@@ -401,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
+  
   async function initialLoad() {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -421,7 +436,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Tidak ada data yang tersedia.');
       tabelKunjunganBody.innerHTML = '<tr><td colspan="7">Tidak ada data kunjungan.</td></tr>';
     }
+    // Mulai polling data setiap 30 detik
+    startPolling();
   }
-
+  
   initialLoad();
 });
