@@ -1,26 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
   const sidebarLinks = document.querySelectorAll('.sidebar a');
   const chartSections = document.querySelectorAll('.chart-section');
-  const tableSection = document.getElementById('kunjungan-harian');
+  const tableSection = document.getElementById('kunjungan-harian'); // Section Tabel Kunjungan
   const tabelKunjunganBody = document.querySelector('#tabelKunjungan tbody');
   const backToHomeBtn = document.getElementById('backToHome');
   const menuToggle = document.querySelector('.menu-toggle');
   const sidebar = document.querySelector('.sidebar');
   const filterTanggalInput = document.getElementById('filter-tanggal');
 
-  // Toggle sidebar (mobile)
+  // Toggle sidebar untuk mobile
   if (menuToggle) {
     menuToggle.addEventListener('click', () => {
       sidebar.classList.toggle('open');
     });
   }
 
+  // Tampilkan section sesuai id
   function showSection(sectionId) {
-    // Sembunyikan semua section
     chartSections.forEach(section => section.classList.remove('active'));
     tableSection.classList.remove('active');
-
-    // Tampilkan section yang diinginkan
     if (sectionId === 'kunjungan-harian') {
       tableSection.classList.add('active');
     } else {
@@ -30,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.innerWidth <= 768) sidebar.classList.remove('open');
   }
 
+  // Atur link sidebar
   sidebarLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -53,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let chartBiayaInstance = null;
   let chartTindakanInstance = null;
 
-  // ======= Caching: Cache data selama 10 detik =======
+  // Cache in-memory dengan localStorage (durasi 10 detik)
   async function fetchData(tanggal = null) {
     const cacheKey = tanggal ? `data_${tanggal}` : "data_all";
     const cacheExpiry = 10000; // 10 detik
@@ -81,12 +80,22 @@ document.addEventListener('DOMContentLoaded', () => {
       return result.data;
     } catch (error) {
       console.error("Gagal mengambil data:", error);
-      const errorDiv = document.createElement('div');
-      errorDiv.textContent = "Gagal mengambil data dari server. Pastikan server berjalan dan coba muat ulang halaman.";
-      errorDiv.style.color = 'red';
-      document.body.appendChild(errorDiv);
       return [];
     }
+  }
+
+  // Pre-fetch data untuk tanggal sebelumnya dan sesudahnya
+  function prefetchAdjacentDates(selectedDate) {
+    const dateObj = new Date(selectedDate);
+    if (isNaN(dateObj)) return;
+    const formatDate = d => d.toISOString().split('T')[0];
+    const prevDate = new Date(dateObj);
+    prevDate.setDate(dateObj.getDate() - 1);
+    const nextDate = new Date(dateObj);
+    nextDate.setDate(dateObj.getDate() + 1);
+    // Lakukan pre-fetch secara asinkron (tidak menunggu)
+    fetchData(formatDate(prevDate));
+    fetchData(formatDate(nextDate));
   }
 
   async function updateCharts(sectionId) {
@@ -114,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ======== PEMROSESAN DATA ========
+  // ========== PEMROSESAN DATA ==========
   function processDataHarian(data) {
     const dailyCounts = {};
     data.forEach(item => {
@@ -408,6 +417,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 10000);
   }
 
+  // ======= Pre-fetch adjacent dates saat tanggal diubah =======
+  function prefetchAdjacentDates(selectedDate) {
+    const dateObj = new Date(selectedDate);
+    if (isNaN(dateObj)) return;
+    const formatDate = d => d.toISOString().split('T')[0];
+    const prevDate = new Date(dateObj);
+    prevDate.setDate(dateObj.getDate() - 1);
+    const nextDate = new Date(dateObj);
+    nextDate.setDate(dateObj.getDate() + 1);
+    // Lakukan pre-fetch (tidak menunggu hasilnya)
+    fetchData(formatDate(prevDate));
+    fetchData(formatDate(nextDate));
+  }
+
   // ======= Inisialisasi: tampilkan langsung section "kunjungan-harian" =======
   async function initialLoad() {
     const today = new Date();
@@ -418,11 +441,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filterTanggalInput) {
       filterTanggalInput.value = todayFormatted;
     }
-    const data = await fetchData(filterTanggalInput.value || null);
+    const data = await fetchData(todayFormatted);
     if (data.length > 0) {
-      // Tampilkan data di tabel Kunjungan Harian
       populateTable(data);
-      // Pastikan link sidebar untuk "kunjungan-harian" aktif
+      // Pastikan link sidebar "kunjungan-harian" aktif
       const kunjunganLink = [...sidebarLinks].find(link => link.dataset.section === 'kunjungan-harian');
       if (kunjunganLink) {
         sidebarLinks.forEach(l => l.classList.remove('active'));
@@ -430,11 +452,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       // Tampilkan section "kunjungan-harian" langsung
       showSection('kunjungan-harian');
+      // Pre-fetch adjacent dates
+      prefetchAdjacentDates(todayFormatted);
     } else {
       console.log('Tidak ada data yang tersedia.');
       tabelKunjunganBody.innerHTML = '<tr><td colspan="8">Tidak ada data kunjungan.</td></tr>';
     }
     startPolling();
+  }
+
+  // Jika user memilih tanggal baru, fetch data dan pre-fetch tanggal adjacent
+  if (filterTanggalInput) {
+    filterTanggalInput.addEventListener('change', async () => {
+      const selectedDate = filterTanggalInput.value;
+      const filteredData = await fetchData(selectedDate);
+      populateTable(filteredData);
+      prefetchAdjacentDates(selectedDate);
+      const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
+      if (activeSection && activeSection.id === 'total-pasien-harian') {
+        updateCharts(activeSection.id);
+      }
+    });
   }
 
   initialLoad();
