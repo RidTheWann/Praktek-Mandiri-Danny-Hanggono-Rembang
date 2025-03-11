@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const sidebarLinks = document.querySelectorAll('.sidebar a');
   const chartSections = document.querySelectorAll('.chart-section');
-  const tableSection = document.getElementById('kunjungan-harian');  // Bagian Tabel Kunjungan
+  const tableSection = document.getElementById('kunjungan-harian');
   const tabelKunjunganBody = document.querySelector('#tabelKunjungan tbody');
   const backToHomeBtn = document.getElementById('backToHome');
   const menuToggle = document.querySelector('.menu-toggle');
@@ -16,8 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showSection(sectionId) {
+    // Sembunyikan semua section
     chartSections.forEach(section => section.classList.remove('active'));
     tableSection.classList.remove('active');
+
+    // Tampilkan section yang diinginkan
     if (sectionId === 'kunjungan-harian') {
       tableSection.classList.add('active');
     } else {
@@ -34,10 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showSection(sectionId);
       sidebarLinks.forEach(l => l.classList.remove('active'));
       link.classList.add('active');
-      // Jika section chart (total-...), panggil updateCharts
-      if (sectionId.startsWith('total-')) {
-        updateCharts(sectionId);
-      }
+      if (sectionId.startsWith('total-')) updateCharts(sectionId);
     });
   });
 
@@ -48,13 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Chart Instances (untuk destroy sebelum buat baru) ---
   let chartPasienHarianInstance = null;
   let chartPasienBulananInstance = null;
   let chartBiayaInstance = null;
   let chartTindakanInstance = null;
 
-  // ========== Caching Data dengan localStorage (10 detik) ==========
+  // ======= Caching: Cache data selama 10 detik =======
   async function fetchData(tanggal = null) {
     const cacheKey = tanggal ? `data_${tanggal}` : "data_all";
     const cacheExpiry = 10000; // 10 detik
@@ -90,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ========== Update Chart sesuai Section ==========
   async function updateCharts(sectionId) {
     try {
       const data = await fetchData();
@@ -116,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ========== PEMROSESAN DATA ==========
+  // ======== PEMROSESAN DATA ========
   function processDataHarian(data) {
     const dailyCounts = {};
     data.forEach(item => {
@@ -397,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // ========== Polling: update data setiap 10 detik ==========
+  // ======= Polling: update data setiap 10 detik =======
   function startPolling() {
     setInterval(async () => {
       const data = await fetchData(filterTanggalInput.value || null);
@@ -406,10 +404,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (activeSection && activeSection.id.startsWith('total-')) {
         updateCharts(activeSection.id);
       }
-      console.log("Polling: Data dashboard diperbarui (10 detik).");
+      console.log("Polling: Dashboard diperbarui (10 detik).");
     }, 10000);
   }
 
+  // ======= Inisialisasi: tampilkan langsung section "kunjungan-harian" =======
   async function initialLoad() {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -421,21 +420,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const data = await fetchData(filterTanggalInput.value || null);
     if (data.length > 0) {
-      // Tampilkan data di Kunjungan Harian
+      // Tampilkan data di tabel Kunjungan Harian
       populateTable(data);
-      // Pastikan link "Kunjungan Harian" di sidebar jadi active
+      // Pastikan link sidebar untuk "kunjungan-harian" aktif
       const kunjunganLink = [...sidebarLinks].find(link => link.dataset.section === 'kunjungan-harian');
       if (kunjunganLink) {
         sidebarLinks.forEach(l => l.classList.remove('active'));
         kunjunganLink.classList.add('active');
       }
-      // Tampilkan section Kunjungan Harian
+      // Tampilkan section "kunjungan-harian" langsung
       showSection('kunjungan-harian');
     } else {
       console.log('Tidak ada data yang tersedia.');
       tabelKunjunganBody.innerHTML = '<tr><td colspan="8">Tidak ada data kunjungan.</td></tr>';
     }
-    // Mulai polling data setiap 10 detik
     startPolling();
   }
 
