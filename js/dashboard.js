@@ -1,21 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Elemen DOM
   const sidebarLinks = document.querySelectorAll('.sidebar a');
   const chartSections = document.querySelectorAll('.chart-section');
-  const tableSection = document.getElementById('kunjungan-harian'); // Section untuk Tabel Kunjungan
+  const tableSection = document.getElementById('kunjungan-harian'); // Section Tabel Kunjungan
   const tabelKunjunganBody = document.querySelector('#tabelKunjungan tbody');
   const backToHomeBtn = document.getElementById('backToHome');
   const menuToggle = document.querySelector('.menu-toggle');
   const sidebar = document.querySelector('.sidebar');
   const filterTanggalInput = document.getElementById('filter-tanggal');
 
-  // Toggle sidebar (mobile)
+  // Toggle sidebar untuk mobile
   if (menuToggle) {
     menuToggle.addEventListener('click', () => {
       sidebar.classList.toggle('open');
     });
   }
 
-  // Tampilkan section sesuai ID
+  // Fungsi untuk menampilkan section tertentu
   function showSection(sectionId) {
     chartSections.forEach(section => section.classList.remove('active'));
     tableSection.classList.remove('active');
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.innerWidth <= 768) sidebar.classList.remove('open');
   }
 
-  // Atur event listener pada link sidebar
+  // Event listener pada link sidebar
   sidebarLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let chartBiayaInstance = null;
   let chartTindakanInstance = null;
 
-  // ======= Cache in-memory menggunakan localStorage (durasi 10 detik) =======
+  // Cache in-memory: localStorage dengan durasi 10 detik
   async function fetchData(tanggal = null) {
     const cacheKey = tanggal ? `data_${tanggal}` : "data_all";
     const cacheExpiry = 10000; // 10 detik
@@ -65,13 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     try {
       let url = '/api/get-data';
-      if (tanggal) {
-        url += `?tanggal=${tanggal}`;
-      }
+      if (tanggal) url += `?tanggal=${tanggal}`;
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const result = await response.json();
       localStorage.setItem(cacheKey, JSON.stringify({
         timestamp: new Date().getTime(),
@@ -84,7 +81,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ======= Update Chart ===========
+  // Pre-fetch adjacent dates saat user memilih tanggal baru
+  function prefetchAdjacentDates(selectedDate) {
+    const dateObj = new Date(selectedDate);
+    if (isNaN(dateObj)) return;
+    const formatDate = d => d.toISOString().split('T')[0];
+    const prevDate = new Date(dateObj);
+    prevDate.setDate(dateObj.getDate() - 1);
+    const nextDate = new Date(dateObj);
+    nextDate.setDate(dateObj.getDate() + 1);
+    // Pre-fetch (tidak menunggu hasil)
+    fetchData(formatDate(prevDate));
+    fetchData(formatDate(nextDate));
+  }
+
+  // Update chart sesuai section
   async function updateCharts(sectionId) {
     try {
       const data = await fetchData();
@@ -110,16 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ======= PEMROSESAN DATA =======
+  // ======== PEMROSESAN DATA ===========
   function processDataHarian(data) {
     const dailyCounts = {};
     data.forEach(item => {
       const tgl = (item["Tanggal Kunjungan"] || "").trim();
       if (!tgl || tgl === "-") return;
       const kelamin = (item["Kelamin"] || "").trim();
-      if (!dailyCounts[tgl]) {
-        dailyCounts[tgl] = { lakiLaki: 0, perempuan: 0 };
-      }
+      if (!dailyCounts[tgl]) dailyCounts[tgl] = { lakiLaki: 0, perempuan: 0 };
       if (kelamin === "Laki - Laki" || kelamin === "Laki-Laki") {
         dailyCounts[tgl].lakiLaki++;
       } else if (kelamin === "Perempuan") {
@@ -192,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
       if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
-
+  
       const rawTindakan = (item["Tindakan"] || "").trim();
       if (rawTindakan) {
         const tindakanArray = rawTindakan.split(",").map(t => t.trim()).filter(Boolean);
@@ -344,30 +353,26 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleDelete(event) {
     const idToDelete = event.target.dataset.id;
     const rowElement = event.target.closest('tr');
-    // Simpan cadangan HTML baris untuk rollback jika penghapusan gagal
+    // Simpan cadangan HTML baris untuk rollback
     const backupRowHTML = rowElement.outerHTML;
-  
+
     const modal = document.getElementById('deleteConfirmationModal');
     const confirmButton = document.getElementById('confirmDelete');
     const cancelButton = document.getElementById('cancelDelete');
     const modalMessage = document.getElementById('modal-message');
-  
+
     // Tampilkan modal konfirmasi
     modal.style.display = 'flex';
     modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
-    // Reset status tombol
     confirmButton.disabled = false;
     cancelButton.textContent = 'Batal';
-  
+
     // Event handler untuk konfirmasi hapus
     confirmButton.onclick = async () => {
-      // Disable tombol confirm agar tidak diklik ulang
       confirmButton.disabled = true;
       modalMessage.textContent = "Menghapus data...";
-  
-      // Optimistic update: hapus baris dari tampilan
+      // Optimistically hapus baris dari tampilan
       rowElement.remove();
-  
       try {
         const response = await fetch(`/api/delete-data?index=${idToDelete}`, { method: 'DELETE' });
         if (!response.ok) {
@@ -378,7 +383,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.status !== "success") {
           throw new Error(result.message || "Gagal menghapus data di server");
         }
-        // Jika berhasil, tampilkan pesan sukses
         modalMessage.textContent = 'Data berhasil dihapus.';
       } catch (error) {
         // Rollback: kembalikan baris yang telah dihapus
@@ -391,14 +395,13 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelButton.textContent = 'OK';
         cancelButton.onclick = () => {
           modal.style.display = 'none';
-          // Reset pesan modal untuk penggunaan selanjutnya
           modalMessage.textContent = 'Apakah Anda yakin ingin menghapus data ini?';
         };
       }
     };
-  
-    // Jika pembatalan, pastikan rollback jika baris sudah dihapus
+
     cancelButton.onclick = () => {
+      // Rollback jika baris sudah dihapus
       if (!document.body.contains(rowElement)) {
         const temp = document.createElement('tbody');
         temp.innerHTML = backupRowHTML;
@@ -407,7 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
       modal.style.display = 'none';
     };
   }
-  
 
   // ======= Polling: Update Data setiap 10 detik =======
   function startPolling() {
@@ -422,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 10000);
   }
 
-  // ======= Inisialisasi: Tampilkan section "kunjungan-harian" langsung =======
+  // ======= Inisialisasi: Tampilkan langsung section "kunjungan-harian" =======
   async function initialLoad() {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -441,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarLinks.forEach(l => l.classList.remove('active'));
         kunjunganLink.classList.add('active');
       }
-      // Tampilkan section "kunjungan-harian" langsung
       showSection('kunjungan-harian');
       prefetchAdjacentDates(todayFormatted);
     } else {
@@ -451,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startPolling();
   }
 
-  // ======= Pre-fetch Data untuk tanggal Adjacent =======
+  // Pre-fetch data untuk tanggal sebelumnya dan sesudahnya
   function prefetchAdjacentDates(selectedDate) {
     const dateObj = new Date(selectedDate);
     if (isNaN(dateObj)) return;
