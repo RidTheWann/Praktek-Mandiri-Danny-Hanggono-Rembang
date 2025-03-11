@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
       if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
-  
+
       const rawTindakan = (item["Tindakan"] || "").trim();
       if (rawTindakan) {
         const tindakanArray = rawTindakan.split(",").map(t => t.trim()).filter(Boolean);
@@ -355,27 +355,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const rowElement = event.target.closest('tr');
     // Simpan backup HTML baris untuk rollback jika penghapusan gagal
     const backupRowHTML = rowElement.outerHTML;
-  
+
     const modal = document.getElementById('deleteConfirmationModal');
     const confirmButton = document.getElementById('confirmDelete');
     const cancelButton = document.getElementById('cancelDelete');
     const modalMessage = document.getElementById('modal-message');
-  
-    // Tampilkan modal konfirmasi
+
+    // Tampilkan modal dan set pesan konfirmasi
     modal.style.display = 'flex';
     modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
-    // Pastikan kedua tombol tampil dan reset teks
+
+    // Tampilkan kedua tombol sebagai opsi awal
     confirmButton.style.display = 'inline-block';
     cancelButton.style.display = 'inline-block';
     confirmButton.disabled = false;
     cancelButton.textContent = 'Batal';
-  
-    // Handler untuk tombol konfirmasi hapus
+
+    // Handler untuk konfirmasi hapus
     confirmButton.onclick = async () => {
-      confirmButton.disabled = true;
+      // Saat proses dimulai, sembunyikan kedua tombol
+      confirmButton.style.display = 'none';
+      cancelButton.style.display = 'none';
       modalMessage.textContent = "Menghapus data...";
+
       // Optimistically hapus baris dari tampilan
       rowElement.remove();
+
       try {
         const response = await fetch(`/api/delete-data?index=${idToDelete}`, { method: 'DELETE' });
         if (!response.ok) {
@@ -386,41 +391,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.status !== "success") {
           throw new Error(result.message || "Gagal menghapus data di server");
         }
+        // Jika berhasil, tampilkan pesan sukses dan munculkan tombol OK
         modalMessage.textContent = 'Data berhasil dihapus.';
       } catch (error) {
-        // Rollback: kembalikan baris yang sudah dihapus
+        // Rollback: kembalikan baris yang telah dihapus
         const temp = document.createElement('tbody');
         temp.innerHTML = backupRowHTML;
         tabelKunjunganBody.appendChild(temp.firstElementChild);
         modalMessage.textContent = `Gagal menghapus data: ${error.message}`;
       } finally {
-        // Sembunyikan tombol konfirmasi, sehingga hanya tombol OK yang muncul
-        confirmButton.style.display = 'none';
+        // Tampilkan hanya tombol OK untuk menutup modal
+        cancelButton.style.display = 'inline-block';
         cancelButton.textContent = 'OK';
         cancelButton.onclick = () => {
           modal.style.display = 'none';
-          // Reset tombol untuk penggunaan selanjutnya
-          confirmButton.style.display = 'inline-block';
+          // Reset pesan modal untuk penggunaan berikutnya
           modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
         };
       }
     };
-  
-    // Jika tombol batal ditekan
+
+    // Jika tombol batal ditekan sebelum konfirmasi
     cancelButton.onclick = () => {
-      // Rollback: Jika baris sudah dihapus, kembalikan ke tabel
+      // Jika baris sudah dihapus secara optimis, rollback
       if (!document.body.contains(rowElement)) {
         const temp = document.createElement('tbody');
         temp.innerHTML = backupRowHTML;
         tabelKunjunganBody.appendChild(temp.firstElementChild);
       }
       modal.style.display = 'none';
-      // Reset tombol konfirmasi untuk penggunaan berikutnya
-      confirmButton.style.display = 'inline-block';
-      modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
     };
   }
-  
+
 
   // ======= Polling: Update Data setiap 10 detik =======
   function startPolling() {
