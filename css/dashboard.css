@@ -434,8 +434,8 @@ body {
     border-radius: 50%;
     border-left-color: #09f;
     animation: spin 1s linear infinite;
-    display: block; /* Pastikan spinner tampil sebagai block element */
-    margin: 8px auto 0; /* Margin atas 8px dan center secara horizontal */
+    display: block;
+    margin: 16px auto 0; /* Margin atas 16px agar ada jarak yang lebih */
   }
   
   @keyframes spin {
