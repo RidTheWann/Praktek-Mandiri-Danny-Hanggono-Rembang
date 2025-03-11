@@ -364,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tampilkan modal dan set pesan konfirmasi
     modal.style.display = 'flex';
     modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
+    // Tampilkan kedua tombol dan reset statusnya
     confirmButton.style.display = 'inline-block';
     cancelButton.style.display = 'inline-block';
     confirmButton.disabled = false;
@@ -371,11 +372,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Handler untuk tombol konfirmasi hapus
     confirmButton.onclick = async () => {
-      // Saat proses dimulai, sembunyikan kedua tombol dan tampilkan spinner
+      // Saat proses dimulai, sembunyikan kedua tombol
       confirmButton.style.display = 'none';
       cancelButton.style.display = 'none';
-      // Tampilkan teks dengan spinner
-      modalMessage.innerHTML = "Menghapus data... <div class='spinner'></div>";
+      // Tampilkan teks dengan spinner di bawahnya
+      modalMessage.innerHTML = "Menghapus data...<br><div class='spinner'></div>";
   
       // Optimistically hapus baris dari tampilan
       rowElement.remove();
@@ -390,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.status !== "success") {
           throw new Error(result.message || "Gagal menghapus data di server");
         }
-        // Jika berhasil, tampilkan pesan sukses
         modalMessage.textContent = 'Data berhasil dihapus.';
       } catch (error) {
         // Rollback: kembalikan baris yang telah dihapus
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Jika tombol batal ditekan sebelum konfirmasi
     cancelButton.onclick = () => {
-      // Rollback: jika baris sudah dihapus secara optimistis, kembalikan
+      // Rollback: kembalikan baris jika sudah dihapus
       if (!document.body.contains(rowElement)) {
         const temp = document.createElement('tbody');
         temp.innerHTML = backupRowHTML;
@@ -419,7 +419,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       modal.style.display = 'none';
     };
-  }  
+  }
+  
   
 
   // ======= Polling: Update Data setiap 10 detik =======
