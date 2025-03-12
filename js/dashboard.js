@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.querySelector('.sidebar');
   const filterTanggalInput = document.getElementById('filter-tanggal');
 
-  // Toggle sidebar untuk mobile
+  // Toggle sidebar (mobile)
   if (menuToggle) {
     menuToggle.addEventListener('click', () => {
       sidebar.classList.toggle('open');
@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (sectionId === 'total-tindakan') {
         const { labelsTindakan, dataTindakan } = processDataTindakan(data);
         if (chartTindakanInstance) chartTindakanInstance.destroy();
+        // Buat chart Tindakan dengan penjelasan warna
         chartTindakanInstance = createChartTindakan('chartTindakan', labelsTindakan, dataTindakan);
       }
     } catch (error) {
@@ -201,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const [year, month] = parts;
       const monthYear = `${year}-${month}`;
       if (!tindakanCounts[monthYear]) tindakanCounts[monthYear] = {};
-  
+
       const rawTindakan = (item["Tindakan"] || "").trim();
       if (rawTindakan) {
         const tindakanArray = rawTindakan.split(",").map(t => t.trim()).filter(Boolean);
@@ -282,8 +283,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * createChartTindakan: Mengganti label "Jumlah Tindakan" dengan penjelasan warna
+   * Anda bisa menyesuaikan teks label dengan memanfaatkan plugin legend bawaan Chart.js.
+   */
   function createChartTindakan(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId).getContext('2d');
+    // Peta label ke warna
     const colorMap = {
       'Obat': 'rgba(255, 99, 132, 0.7)',
       'Cabut Anak': 'rgba(54, 162, 235, 0.7)',
@@ -294,12 +300,15 @@ document.addEventListener('DOMContentLoaded', () => {
       'Rujuk': 'rgba(255, 0, 0, 0.7)',
       'Lainnya': 'rgba(201, 203, 207, 0.7)'
     };
-    return new Chart(ctx, {
+
+    // Gunakan label custom legend agar penjelasan warna muncul sesuai item
+    const chart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels,
         datasets: [{
-          label: 'Jumlah Tindakan',
+          // Ganti label "Jumlah Tindakan" dengan penjelasan setiap warna
+          label: '', // Kosongkan label dataset bawaan
           data,
           backgroundColor: labels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
           borderColor: labels.map(label => colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)'),
@@ -312,10 +321,34 @@ document.addEventListener('DOMContentLoaded', () => {
           y: { beginAtZero: true, ticks: { stepSize: 1 } }
         },
         plugins: {
-          legend: { display: true, position: 'top' }
+          // Legend bawaan Chart.js
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              generateLabels: function (chart) {
+                const rawLabels = chart.data.labels;
+                const backgroundColors = chart.data.datasets[0].backgroundColor;
+                // Buat custom legend item berdasarkan label & warna
+                return rawLabels.map((label, i) => ({
+                  text: label, // Teks legend adalah nama tindakan
+                  fillStyle: backgroundColors[i],
+                  strokeStyle: backgroundColors[i],
+                  hidden: false,
+                  index: i
+                }));
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: 'Detail Tindakan', // Ubah sesuai keinginan
+            font: { size: 16 }
+          }
         }
       }
     });
+    return chart;
   }
 
   // ======= Populate Tabel Kunjungan Harian =======
@@ -353,18 +386,15 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleDelete(event) {
     const idToDelete = event.target.dataset.id;
     const rowElement = event.target.closest('tr');
-    // Simpan backup HTML baris untuk rollback jika penghapusan gagal
-    const backupRowHTML = rowElement.outerHTML;
   
     const modal = document.getElementById('deleteConfirmationModal');
     const confirmButton = document.getElementById('confirmDelete');
     const cancelButton = document.getElementById('cancelDelete');
     const modalMessage = document.getElementById('modal-message');
   
-    // Tampilkan modal dan set pesan konfirmasi
+    // Tampilkan modal konfirmasi
     modal.style.display = 'flex';
     modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
-    // Tampilkan kedua tombol dan reset statusnya
     confirmButton.style.display = 'inline-block';
     cancelButton.style.display = 'inline-block';
     confirmButton.disabled = false;
@@ -372,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Handler untuk tombol konfirmasi hapus
     confirmButton.onclick = async () => {
-      // Saat proses dimulai, sembunyikan kedua tombol
+      // Sembunyikan tombol selama proses berlangsung
       confirmButton.style.display = 'none';
       cancelButton.style.display = 'none';
       // Tampilkan teks dengan spinner di bawahnya
@@ -393,13 +423,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         modalMessage.textContent = 'Data berhasil dihapus.';
       } catch (error) {
-        // Rollback: kembalikan baris yang telah dihapus
-        const temp = document.createElement('tbody');
-        temp.innerHTML = backupRowHTML;
-        tabelKunjunganBody.appendChild(temp.firstElementChild);
+        // Tidak melakukan rollback, hanya tampilkan pesan error
         modalMessage.textContent = `Gagal menghapus data: ${error.message}`;
       } finally {
-        // Tampilkan hanya tombol OK untuk menutup modal
+        // Tampilkan tombol OK untuk menutup modal
         cancelButton.style.display = 'inline-block';
         cancelButton.textContent = 'OK';
         cancelButton.onclick = () => {
@@ -411,17 +438,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Jika tombol batal ditekan sebelum konfirmasi
     cancelButton.onclick = () => {
-      // Rollback: kembalikan baris jika sudah dihapus
-      if (!document.body.contains(rowElement)) {
-        const temp = document.createElement('tbody');
-        temp.innerHTML = backupRowHTML;
-        tabelKunjunganBody.appendChild(temp.firstElementChild);
-      }
       modal.style.display = 'none';
     };
-  }
-  
-  
+  }  
 
   // ======= Polling: Update Data setiap 10 detik =======
   function startPolling() {
@@ -465,19 +484,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Pre-fetch data untuk tanggal sebelumnya dan sesudahnya
-  function prefetchAdjacentDates(selectedDate) {
-    const dateObj = new Date(selectedDate);
-    if (isNaN(dateObj)) return;
-    const formatDate = d => d.toISOString().split('T')[0];
-    const prevDate = new Date(dateObj);
-    prevDate.setDate(dateObj.getDate() - 1);
-    const nextDate = new Date(dateObj);
-    nextDate.setDate(dateObj.getDate() + 1);
-    fetchData(formatDate(prevDate));
-    fetchData(formatDate(nextDate));
-  }
-
-  // Event Listener untuk input tanggal
   if (filterTanggalInput) {
     filterTanggalInput.addEventListener('change', async () => {
       const selectedDate = filterTanggalInput.value;
