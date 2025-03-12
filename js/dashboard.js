@@ -249,7 +249,25 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       options: {
         maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } }
+        scales: { y: { beginAtZero: true } },
+        plugins: {
+          legend: {
+            labels: {
+              generateLabels: function(chart) {
+                const datasets = chart.data.datasets;
+                return datasets.map(dataset => ({
+                  text: dataset.label,
+                  fillStyle: dataset.backgroundColor,
+                  strokeStyle: dataset.borderColor,
+                  fontColor: dataset.borderColor,
+                  hidden: false,
+                  datasetIndex: datasets.indexOf(dataset)
+                }));
+              },
+              color: undefined
+            }
+          }
+        }
       }
     });
   }
@@ -279,7 +297,25 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       options: {
         maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true } }
+        scales: { y: { beginAtZero: true } },
+        plugins: {
+          legend: {
+            labels: {
+              generateLabels: function(chart) {
+                const datasets = chart.data.datasets;
+                return datasets.map(dataset => ({
+                  text: dataset.label,
+                  fillStyle: dataset.backgroundColor,
+                  strokeStyle: dataset.borderColor,
+                  fontColor: dataset.borderColor,
+                  hidden: false,
+                  datasetIndex: datasets.indexOf(dataset)
+                }));
+              },
+              color: undefined
+            }
+          }
+        }
       }
     });
   }
