@@ -288,105 +288,104 @@ document.addEventListener('DOMContentLoaded', () => {
    * Anda bisa menyesuaikan teks label dengan memanfaatkan plugin legend bawaan Chart.js.
    */
   function createChartTindakan(canvasId, labels, data) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-  
-    // Urutan label yang diinginkan
-    const desiredOrder = [
-      'Obat',
-      'Cabut Anak',
-      'Cabut Dewasa',
-      'Tambal Sementara',
-      'Tambal Tetap',
-      'Scaling',
-      'Rujuk',
-      'Lainnya'
-    ];
-  
-    // Hanya ambil label yang ada di 'labels' lalu urutkan
-    const orderedLabels = desiredOrder.filter(label => labels.includes(label));
-  
-    // Mapping label -> data
-    const mapping = {};
-    labels.forEach((label, i) => {
-      mapping[label] = data[i];
-    });
-    // Susun data sesuai urutan label
-    const orderedData = orderedLabels.map(label => mapping[label] || 0);
-  
-    // Peta warna
-    const colorMap = {
-      'Obat': 'rgba(255, 99, 132, 0.7)',
-      'Cabut Anak': 'rgba(54, 162, 235, 0.7)',
-      'Cabut Dewasa': 'rgba(255, 206, 86, 0.7)',
-      'Tambal Sementara': 'rgba(75, 192, 192, 0.7)',
-      'Tambal Tetap': 'rgba(153, 102, 255, 0.7)',
-      'Scaling': 'rgba(255, 159, 64, 0.7)',
-      'Rujuk': 'rgba(255, 0, 0, 0.7)',
-      'Lainnya': 'rgba(201, 203, 207, 0.7)'
-    };
-  
-    // Warna teks yang diinginkan untuk judul chart & legend
-    const textColor = '#fff'; // Ganti sesuai kebutuhan, misalnya "#fff" untuk putih
-  
-    return new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: orderedLabels,
-        datasets: [{
-          label: 'Detail Tindakan', // Label dataset
-          data: orderedData,
-          backgroundColor: orderedLabels.map(label => colorMap[label] || 'rgba(201,203,207,0.7)'),
-          borderColor: orderedLabels.map(label =>
-            colorMap[label] ? colorMap[label].replace('0.7','1') : 'rgba(201,203,207,1)'
-          ),
-          borderWidth: 1
-        }]
+  const ctx = document.getElementById(canvasId).getContext('2d');
+
+  // Urutan label yang diinginkan
+  const desiredOrder = [
+    'Obat',
+    'Cabut Anak',
+    'Cabut Dewasa',
+    'Tambal Sementara',
+    'Tambal Tetap',
+    'Scaling',
+    'Rujuk',
+    'Lainnya'
+  ];
+
+  // Hanya ambil label yang ada di 'labels' lalu urutkan
+  const orderedLabels = desiredOrder.filter(label => labels.includes(label));
+
+  // Mapping label -> data
+  const mapping = {};
+  labels.forEach((label, i) => {
+    mapping[label] = data[i];
+  });
+  // Susun data sesuai urutan label
+  const orderedData = orderedLabels.map(label => mapping[label] || 0);
+
+  // Peta warna
+  const colorMap = {
+    'Obat': 'rgba(255, 99, 132, 0.7)',
+    'Cabut Anak': 'rgba(54, 162, 235, 0.7)',
+    'Cabut Dewasa': 'rgba(255, 206, 86, 0.7)',
+    'Tambal Sementara': 'rgba(75, 192, 192, 0.7)',
+    'Tambal Tetap': 'rgba(153, 102, 255, 0.7)',
+    'Scaling': 'rgba(255, 159, 64, 0.7)',
+    'Rujuk': 'rgba(255, 0, 0, 0.7)',
+    'Lainnya': 'rgba(201, 203, 207, 0.7)'
+  };
+
+  // Warna teks yang diinginkan untuk judul chart & legend
+  const textColor = '#fff'; // Ganti sesuai kebutuhan, misalnya "#fff" untuk putih
+
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: orderedLabels,
+      datasets: [{
+        label: 'Detail Tindakan', // Label dataset
+        data: orderedData,
+        backgroundColor: orderedLabels.map(label => colorMap[label] || 'rgba(201,203,207,0.7)'),
+        borderColor: orderedLabels.map(label =>
+          colorMap[label] ? colorMap[label].replace('0.7','1') : 'rgba(201,203,207,1)'
+        ),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            color: textColor  // Warna teks pada sumbu Y
+          }
+        },
+        x: {
+          ticks: {
+            color: textColor  // Warna teks pada sumbu X
+          }
+        }
       },
-      options: {
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              color: textColor  // Warna teks pada sumbu Y
-            }
-          },
-          x: {
-            ticks: {
-              color: textColor  // Warna teks pada sumbu X
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            color: textColor, // Warna teks legend item
+            generateLabels: function(chart) {
+              // Legend item berdasarkan urutan label yang diinginkan
+              return orderedLabels.map((label, i) => ({
+                text: label,
+                fillStyle: colorMap[label] || 'rgba(201,203,207,0.7)',
+                strokeStyle: colorMap[label] ? colorMap[label].replace('0.7','1') : 'rgba(201,203,207,1)',
+                hidden: false,
+                index: i
+              }));
             }
           }
         },
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top',
-            labels: {
-              color: textColor, // Warna teks legend item
-              generateLabels: function(chart) {
-                // Legend item berdasarkan urutan label yang diinginkan
-                return orderedLabels.map((label, i) => ({
-                  text: label,
-                  fillStyle: colorMap[label] || 'rgba(201,203,207,0.7)',
-                  strokeStyle: colorMap[label] ? colorMap[label].replace('0.7','1') : 'rgba(201,203,207,1)',
-                  hidden: false,
-                  index: i
-                }));
-              }
-            }
-          },
-          title: {
-            display: true,
-            text: 'Detail Tindakan',
-            font: { size: 16 },
-            color: textColor  // Warna teks judul chart
-          }
+        title: {
+          display: true,
+          text: 'Detail Tindakan',
+          font: { size: 16 },
+          color: textColor  // Warna teks judul chart
         }
       }
-    });
-  }
-  
+    }
+  });
+}
 
   // ======= Populate Tabel Kunjungan Harian =======
   function populateTable(data) {
