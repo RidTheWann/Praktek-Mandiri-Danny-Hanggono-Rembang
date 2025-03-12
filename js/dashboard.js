@@ -300,37 +300,47 @@ document.addEventListener('DOMContentLoaded', () => {
       'Rujuk': 'rgba(255, 0, 0, 0.7)',
       'Lainnya': 'rgba(201, 203, 207, 0.7)'
     };
+  
     return new Chart(ctx, {
       type: 'bar',
       data: {
         labels,
         datasets: [{
-          // Gunakan custom legend di Chart.js untuk menampilkan penjelasan sesuai warna
-          label: '', // label kosong karena kita akan gunakan custom legend
+          // label dataset dikosongkan karena kita pakai custom legend
+          label: '',
           data,
           backgroundColor: labels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
-          borderColor: labels.map(label => colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)'),
+          borderColor: labels.map(label => colorMap[label] 
+            ? colorMap[label].replace('0.7', '1') 
+            : 'rgba(201, 203, 207, 1)'
+          ),
           borderWidth: 1
         }]
       },
       options: {
         maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 }
+          }
         },
         plugins: {
           legend: {
             display: true,
             position: 'top',
             labels: {
-              generateLabels: function(chart) {
-                // Custom legend untuk menampilkan penjelasan setiap warna
-                const dataset = chart.data.datasets[0];
-                return labels.map((label, i) => ({
+              color: '#fff', // warna teks legend
+              generateLabels: function (chart) {
+                const rawLabels = chart.data.labels; 
+                const bgColors = chart.data.datasets[0].backgroundColor;
+                // Pastikan menambahkan datasetIndex: 0 agar toggle berfungsi
+                return rawLabels.map((label, i) => ({
                   text: label,
-                  fillStyle: dataset.backgroundColor[i],
-                  strokeStyle: dataset.backgroundColor[i],
+                  fillStyle: bgColors[i],
+                  strokeStyle: bgColors[i],
                   hidden: false,
+                  datasetIndex: 0, // <-- Penting!
                   index: i
                 }));
               }
@@ -339,12 +349,14 @@ document.addEventListener('DOMContentLoaded', () => {
           title: {
             display: true,
             text: 'Detail Tindakan',
+            color: '#fff',
             font: { size: 16 }
           }
         }
       }
     });
-  }  
+  }
+  
 
   // ======= Populate Tabel Kunjungan Harian =======
   function populateTable(data) {
