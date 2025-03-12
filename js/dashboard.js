@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function createChartTindakan(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId).getContext('2d');
   
-    // Urutan label yang diinginkan
+    // Tentukan urutan yang diinginkan
     const desiredOrder = [
       'Obat',
       'Cabut Anak',
@@ -302,10 +302,10 @@ document.addEventListener('DOMContentLoaded', () => {
       'Lainnya'
     ];
   
-    // Filter dan urutkan label sesuai desiredOrder
+    // Filter & urutkan label sesuai desiredOrder
     const orderedLabels = desiredOrder.filter(label => labels.includes(label));
   
-    // Buat mapping dari label ke nilai
+    // Buat mapping dari label ke nilai data
     const mapping = {};
     labels.forEach((label, i) => {
       mapping[label] = data[i];
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Susun data sesuai urutan label
     const orderedData = orderedLabels.map(label => mapping[label] || 0);
   
-    // Peta warna untuk setiap kategori
+    // Peta warna untuk tiap kategori
     const colorMap = {
       'Obat': 'rgba(255, 99, 132, 0.7)',
       'Cabut Anak': 'rgba(54, 162, 235, 0.7)',
@@ -325,16 +325,19 @@ document.addEventListener('DOMContentLoaded', () => {
       'Lainnya': 'rgba(201, 203, 207, 0.7)'
     };
   
+    // Warna teks judul & legend
+    const textColor = '#fff';  // Ganti sesuai kebutuhan
+  
     return new Chart(ctx, {
       type: 'bar',
       data: {
         labels: orderedLabels,
         datasets: [{
-          label: 'Detail Tindakan',
+          label: 'Detail Tindakan', // Label dataset
           data: orderedData,
           backgroundColor: orderedLabels.map(label => colorMap[label] || 'rgba(201,203,207,0.7)'),
           borderColor: orderedLabels.map(label =>
-            colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201,203,207,1)'
+            colorMap[label] ? colorMap[label].replace('0.7','1') : 'rgba(201,203,207,1)'
           ),
           borderWidth: 1
         }]
@@ -342,15 +345,17 @@ document.addEventListener('DOMContentLoaded', () => {
       options: {
         maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+          y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } },
+          x: { ticks: { color: textColor } }
         },
         plugins: {
           legend: {
             display: true,
             position: 'top',
             labels: {
-              // Gunakan generateLabels untuk menyesuaikan item legend
+              color: textColor, // Warna teks legend
               generateLabels: function (chart) {
+                // Buat item legend berdasarkan orderedLabels
                 return orderedLabels.map((label, i) => ({
                   text: label,
                   fillStyle: colorMap[label] || 'rgba(201,203,207,0.7)',
@@ -358,20 +363,14 @@ document.addEventListener('DOMContentLoaded', () => {
                   hidden: false,
                   index: i
                 }));
-              },
-              // Fungsi color menentukan warna teks legend agar sama dengan bar
-              color: function(context) {
-                const label = context.legendItem.text;
-                return colorMap[label]
-                  ? colorMap[label].replace('0.7','1') 
-                  : 'rgba(201,203,207,1)';
               }
             }
           },
           title: {
             display: true,
             text: 'Detail Tindakan',
-            font: { size: 16 }
+            font: { size: 16 },
+            color: textColor // Warna teks judul chart
           }
         }
       }
