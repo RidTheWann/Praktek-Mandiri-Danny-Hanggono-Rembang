@@ -284,10 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /**
-   * createChartTindakan: Mengganti label "Jumlah Tindakan" dengan penjelasan warna
-   * Anda bisa menyesuaikan teks label dengan memanfaatkan plugin legend bawaan Chart.js.
-   */
   function createChartTindakan(canvasId, labels, data) {
   const ctx = document.getElementById(canvasId).getContext('2d');
   const colorMap = {
@@ -330,20 +326,22 @@ document.addEventListener('DOMContentLoaded', () => {
           display: true,
           position: 'top',
           labels: {
-            color: '#fff', // warna teks legend
             generateLabels: function (chart) {
-              const rawLabels = chart.data.labels; 
+              const rawLabels = chart.data.labels;
               const bgColors = chart.data.datasets[0].backgroundColor;
-              // Pastikan menambahkan datasetIndex: 0 agar toggle berfungsi
               return rawLabels.map((label, i) => ({
                 text: label,
                 fillStyle: bgColors[i],
                 strokeStyle: bgColors[i],
+                // Mengatur warna teks sesuai dengan warna bar
+                fontColor: bgColors[i].replace('0.7', '1'),
                 hidden: false,
-                datasetIndex: 0, // <-- Penting!
+                datasetIndex: 0,
                 index: i
               }));
-            }
+            },
+            // Menghapus properti color default agar menggunakan fontColor dari generateLabels
+            color: undefined
           }
         },
         title: {
