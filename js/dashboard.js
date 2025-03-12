@@ -289,84 +289,74 @@ document.addEventListener('DOMContentLoaded', () => {
    * Anda bisa menyesuaikan teks label dengan memanfaatkan plugin legend bawaan Chart.js.
    */
   function createChartTindakan(canvasId, labels, data) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    const colorMap = {
-      'Obat': 'rgba(255, 99, 132, 0.7)',
-      'Cabut Anak': 'rgba(54, 162, 235, 0.7)',
-      'Cabut Dewasa': 'rgba(255, 206, 86, 0.7)',
-      'Tambal Sementara': 'rgba(75, 192, 192, 0.7)',
-      'Tambal Tetap': 'rgba(153, 102, 255, 0.7)',
-      'Scaling': 'rgba(255, 159, 64, 0.7)',
-      'Rujuk': 'rgba(255, 0, 0, 0.7)',
-      'Lainnya': 'rgba(201, 203, 207, 0.7)'
-    };
-  
-    return new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          // Kosongkan label dataset karena kita pakai custom legend
-          label: '',
-          data,
-          backgroundColor: labels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
-          borderColor: labels.map(label => 
-            colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)'
-          ),
-          borderWidth: 1
-        }]
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const colorMap = {
+    'Obat': 'rgba(255, 99, 132, 0.7)',
+    'Cabut Anak': 'rgba(54, 162, 235, 0.7)',
+    'Cabut Dewasa': 'rgba(255, 206, 86, 0.7)',
+    'Tambal Sementara': 'rgba(75, 192, 192, 0.7)',
+    'Tambal Tetap': 'rgba(153, 102, 255, 0.7)',
+    'Scaling': 'rgba(255, 159, 64, 0.7)',
+    'Rujuk': 'rgba(255, 0, 0, 0.7)',
+    'Lainnya': 'rgba(201, 203, 207, 0.7)'
+  };
+
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        // label dataset dikosongkan karena kita pakai custom legend
+        label: '',
+        data,
+        backgroundColor: labels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
+        borderColor: labels.map(label => colorMap[label] 
+          ? colorMap[label].replace('0.7', '1') 
+          : 'rgba(201, 203, 207, 1)'
+        ),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1 }
+        }
       },
-      options: {
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 1 }
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            color: '#fff', // warna teks legend
+            generateLabels: function (chart) {
+              const rawLabels = chart.data.labels; 
+              const bgColors = chart.data.datasets[0].backgroundColor;
+              // Pastikan menambahkan datasetIndex: 0 agar toggle berfungsi
+              return rawLabels.map((label, i) => ({
+                text: label,
+                fillStyle: bgColors[i],
+                strokeStyle: bgColors[i],
+                hidden: false,
+                datasetIndex: 0, // <-- Penting!
+                index: i
+              }));
+            }
           }
         },
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top',
-            labels: {
-              /**
-               * color: warna teks legend (mis. putih),
-               * boxWidth: lebar kotak warna,
-               * boxHeight: tinggi kotak warna (Chart.js v3+),
-               * padding: jarak horizontal antara kotak dan teks,
-               * font: mengatur ukuran teks.
-               */
-              color: '#fff',      // Warna teks legend
-              boxWidth: 20,       // Lebar kotak warna
-              boxHeight: 20,      // Tinggi kotak warna (Chart.js v3+)
-              padding: 10,        // Jarak horizontal antara kotak warna & teks
-              generateLabels: function (chart) {
-                const rawLabels = chart.data.labels;
-                const bgColors = chart.data.datasets[0].backgroundColor;
-                return rawLabels.map((label, i) => ({
-                  text: label,
-                  fillStyle: bgColors[i],
-                  strokeStyle: bgColors[i],
-                  hidden: false,
-                  datasetIndex: 0   // Penting agar toggle legend berfungsi
-                }));
-              },
-              font: {
-                size: 14
-              }
-            }
-          },
-          title: {
-            display: true,
-            text: 'Detail Tindakan',
-            color: '#fff',     // Warna teks judul
-            font: { size: 16 }
-          }
+        title: {
+          display: true,
+          text: 'Detail Tindakan',
+          color: '#fff',
+          font: { size: 16 }
         }
       }
-    });
-  }
-  
+    }
+  });
+}
+
 
   // ======= Populate Tabel Kunjungan Harian =======
   function populateTable(data) {
