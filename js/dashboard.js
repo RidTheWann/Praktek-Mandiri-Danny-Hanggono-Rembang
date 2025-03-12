@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataTindakan = labelsTindakan.map(label => tindakanCounts[label]);
     return { labelsTindakan, dataTindakan };
   }
-  
+
 
   // ======= Chart Generators =======
   function createChart(canvasId, type, labels, dataLaki, dataPerempuan) {
@@ -323,7 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
             display: true,
             position: 'top',
             labels: {
-              generateLabels: function(chart) {
+              color: '#333', // Warna teks legend disamakan dengan judul
+              generateLabels: function (chart) {
                 // Custom legend untuk menampilkan penjelasan setiap warna
                 const dataset = chart.data.datasets[0];
                 return labels.map((label, i) => ({
@@ -339,12 +340,16 @@ document.addEventListener('DOMContentLoaded', () => {
           title: {
             display: true,
             text: 'Detail Tindakan',
-            font: { size: 16 }
+            font: {
+              size: 16,
+              weight: 'bold' // Tambahkan jika perlu menyamakan ketebalan font
+            },
+            color: '#333'
           }
         }
       }
     });
-  }  
+  }
 
   // ======= Populate Tabel Kunjungan Harian =======
   function populateTable(data) {
@@ -381,12 +386,12 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleDelete(event) {
     const idToDelete = event.target.dataset.id;
     const rowElement = event.target.closest('tr');
-  
+
     const modal = document.getElementById('deleteConfirmationModal');
     const confirmButton = document.getElementById('confirmDelete');
     const cancelButton = document.getElementById('cancelDelete');
     const modalMessage = document.getElementById('modal-message');
-  
+
     // Tampilkan modal konfirmasi
     modal.style.display = 'flex';
     modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
@@ -394,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelButton.style.display = 'inline-block';
     confirmButton.disabled = false;
     cancelButton.textContent = 'Batal';
-  
+
     // Handler untuk tombol konfirmasi hapus
     confirmButton.onclick = async () => {
       // Sembunyikan tombol selama proses berlangsung
@@ -402,10 +407,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cancelButton.style.display = 'none';
       // Tampilkan teks dengan spinner di bawahnya
       modalMessage.innerHTML = "Menghapus data...<br><div class='spinner'></div>";
-  
+
       // Optimistically hapus baris dari tampilan
       rowElement.remove();
-  
+
       try {
         const response = await fetch(`/api/delete-data?index=${idToDelete}`, { method: 'DELETE' });
         if (!response.ok) {
@@ -430,13 +435,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
     };
-  
+
     // Jika tombol batal ditekan sebelum konfirmasi
     cancelButton.onclick = () => {
       modal.style.display = 'none';
     };
   }
-  
+
 
   // ======= Polling: Update Data setiap 10 detik =======
   function startPolling() {
