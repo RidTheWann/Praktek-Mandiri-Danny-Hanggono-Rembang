@@ -289,7 +289,32 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   function createChartTindakan(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId).getContext('2d');
-    // Peta label ke warna
+  
+    // Urutan yang diinginkan
+    const desiredOrder = [
+      'Obat',
+      'Cabut Anak',
+      'Cabut Dewasa',
+      'Tambal Sementara',
+      'Tambal Tetap',
+      'Scaling',
+      'Rujuk',
+      'Lainnya'
+    ];
+  
+    // Filter dan urutkan label sesuai desiredOrder
+    const orderedLabels = desiredOrder.filter(label => labels.includes(label));
+  
+    // Buat mapping dari label ke nilai
+    const mapping = {};
+    labels.forEach((label, i) => {
+      mapping[label] = data[i];
+    });
+  
+    // Susun ulang data sesuai orderedLabels
+    const orderedData = orderedLabels.map(label => mapping[label] || 0);
+  
+    // Peta warna untuk setiap kategori
     const colorMap = {
       'Obat': 'rgba(255, 99, 132, 0.7)',
       'Cabut Anak': 'rgba(54, 162, 235, 0.7)',
@@ -300,18 +325,18 @@ document.addEventListener('DOMContentLoaded', () => {
       'Rujuk': 'rgba(255, 0, 0, 0.7)',
       'Lainnya': 'rgba(201, 203, 207, 0.7)'
     };
-
-    // Gunakan label custom legend agar penjelasan warna muncul sesuai item
-    const chart = new Chart(ctx, {
+  
+    return new Chart(ctx, {
       type: 'bar',
       data: {
-        labels,
+        labels: orderedLabels,
         datasets: [{
-          // Ganti label "Jumlah Tindakan" dengan penjelasan setiap warna
-          label: '', // Kosongkan label dataset bawaan
-          data,
-          backgroundColor: labels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
-          borderColor: labels.map(label => colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)'),
+          label: 'Detail Tindakan',
+          data: orderedData,
+          backgroundColor: orderedLabels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
+          borderColor: orderedLabels.map(label =>
+            colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)'
+          ),
           borderWidth: 1
         }]
       },
@@ -321,19 +346,16 @@ document.addEventListener('DOMContentLoaded', () => {
           y: { beginAtZero: true, ticks: { stepSize: 1 } }
         },
         plugins: {
-          // Legend bawaan Chart.js
           legend: {
             display: true,
             position: 'top',
             labels: {
               generateLabels: function (chart) {
-                const rawLabels = chart.data.labels;
-                const backgroundColors = chart.data.datasets[0].backgroundColor;
-                // Buat custom legend item berdasarkan label & warna
-                return rawLabels.map((label, i) => ({
-                  text: label, // Teks legend adalah nama tindakan
-                  fillStyle: backgroundColors[i],
-                  strokeStyle: backgroundColors[i],
+                // Menghasilkan legend berdasarkan orderedLabels
+                return orderedLabels.map((label, i) => ({
+                  text: label,
+                  fillStyle: colorMap[label] || 'rgba(201, 203, 207, 0.7)',
+                  strokeStyle: colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)',
                   hidden: false,
                   index: i
                 }));
@@ -342,14 +364,14 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           title: {
             display: true,
-            text: 'Detail Tindakan', // Ubah sesuai keinginan
+            text: 'Detail Tindakan',
             font: { size: 16 }
           }
         }
       }
     });
-    return chart;
   }
+  
 
   // ======= Populate Tabel Kunjungan Harian =======
   function populateTable(data) {
@@ -386,12 +408,12 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleDelete(event) {
     const idToDelete = event.target.dataset.id;
     const rowElement = event.target.closest('tr');
-  
+
     const modal = document.getElementById('deleteConfirmationModal');
     const confirmButton = document.getElementById('confirmDelete');
     const cancelButton = document.getElementById('cancelDelete');
     const modalMessage = document.getElementById('modal-message');
-  
+
     // Tampilkan modal konfirmasi
     modal.style.display = 'flex';
     modalMessage.textContent = "Apakah Anda yakin ingin menghapus data ini?";
@@ -399,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelButton.style.display = 'inline-block';
     confirmButton.disabled = false;
     cancelButton.textContent = 'Batal';
-  
+
     // Handler untuk tombol konfirmasi hapus
     confirmButton.onclick = async () => {
       // Sembunyikan tombol selama proses berlangsung
@@ -407,10 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cancelButton.style.display = 'none';
       // Tampilkan teks dengan spinner di bawahnya
       modalMessage.innerHTML = "Menghapus data<br><div class='spinner'></div>";
-  
+
       // Optimistically hapus baris dari tampilan
       rowElement.remove();
-  
+
       try {
         const response = await fetch(`/api/delete-data?index=${idToDelete}`, { method: 'DELETE' });
         if (!response.ok) {
@@ -435,12 +457,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
       }
     };
-  
+
     // Jika tombol batal ditekan sebelum konfirmasi
     cancelButton.onclick = () => {
       modal.style.display = 'none';
     };
-  }  
+  }
 
   // ======= Polling: Update Data setiap 10 detik =======
   function startPolling() {
@@ -485,17 +507,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Pre-fetch data untuk tanggal sebelumnya dan sesudahnya
   if (filterTanggalInput) {
-    filterTanggalInput.addEventListener('change', async () => {
-      const selectedDate = filterTanggalInput.value;
-      const filteredData = await fetchData(selectedDate);
-      populateTable(filteredData);
-      prefetchAdjacentDates(selectedDate);
-      const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
-      if (activeSection && activeSection.id === 'total-pasien-harian') {
-        updateCharts(activeSection.id);
-      }
-    });
-  }
+  filterTanggalInput.addEventListener('change', async () => {
+    const selectedDate = filterTanggalInput.value;
+    const filteredData = await fetchData(selectedDate);
+    populateTable(filteredData);
+    prefetchAdjacentDates(selectedDate);
+    const activeSection = document.querySelector('.chart-section.active') || document.querySelector('.table-section.active');
+    if (activeSection && activeSection.id === 'total-pasien-harian') {
+      updateCharts(activeSection.id);
+    }
+  });
+}
 
-  initialLoad();
+initialLoad();
 });
