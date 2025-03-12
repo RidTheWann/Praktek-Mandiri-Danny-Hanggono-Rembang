@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function createChartTindakan(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId).getContext('2d');
   
-    // Urutan yang diinginkan
+    // Urutan label yang diinginkan
     const desiredOrder = [
       'Obat',
       'Cabut Anak',
@@ -310,8 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
     labels.forEach((label, i) => {
       mapping[label] = data[i];
     });
-  
-    // Susun ulang data sesuai orderedLabels
+    // Susun data sesuai urutan label
     const orderedData = orderedLabels.map(label => mapping[label] || 0);
   
     // Peta warna untuk setiap kategori
@@ -333,9 +332,9 @@ document.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Detail Tindakan',
           data: orderedData,
-          backgroundColor: orderedLabels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
+          backgroundColor: orderedLabels.map(label => colorMap[label] || 'rgba(201,203,207,0.7)'),
           borderColor: orderedLabels.map(label =>
-            colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)'
+            colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201,203,207,1)'
           ),
           borderWidth: 1
         }]
@@ -350,15 +349,22 @@ document.addEventListener('DOMContentLoaded', () => {
             display: true,
             position: 'top',
             labels: {
+              // Gunakan generateLabels untuk menyesuaikan item legend
               generateLabels: function (chart) {
-                // Menghasilkan legend berdasarkan orderedLabels
                 return orderedLabels.map((label, i) => ({
                   text: label,
-                  fillStyle: colorMap[label] || 'rgba(201, 203, 207, 0.7)',
-                  strokeStyle: colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)',
+                  fillStyle: colorMap[label] || 'rgba(201,203,207,0.7)',
+                  strokeStyle: colorMap[label] ? colorMap[label].replace('0.7','1') : 'rgba(201,203,207,1)',
                   hidden: false,
                   index: i
                 }));
+              },
+              // Fungsi color menentukan warna teks legend agar sama dengan bar
+              color: function(context) {
+                const label = context.legendItem.text;
+                return colorMap[label]
+                  ? colorMap[label].replace('0.7','1') 
+                  : 'rgba(201,203,207,1)';
               }
             }
           },
