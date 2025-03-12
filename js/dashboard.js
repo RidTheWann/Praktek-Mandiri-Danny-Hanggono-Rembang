@@ -306,13 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
       data: {
         labels,
         datasets: [{
-          // label dataset dikosongkan karena kita pakai custom legend
+          // Kosongkan label dataset karena kita pakai custom legend
           label: '',
           data,
           backgroundColor: labels.map(label => colorMap[label] || 'rgba(201, 203, 207, 0.7)'),
-          borderColor: labels.map(label => colorMap[label] 
-            ? colorMap[label].replace('0.7', '1') 
-            : 'rgba(201, 203, 207, 1)'
+          borderColor: labels.map(label => 
+            colorMap[label] ? colorMap[label].replace('0.7', '1') : 'rgba(201, 203, 207, 1)'
           ),
           borderWidth: 1
         }]
@@ -330,26 +329,37 @@ document.addEventListener('DOMContentLoaded', () => {
             display: true,
             position: 'top',
             labels: {
-              color: '#fff', // warna teks legend
+              /**
+               * color: warna teks legend (mis. putih),
+               * boxWidth: lebar kotak warna,
+               * boxHeight: tinggi kotak warna (Chart.js v3+),
+               * padding: jarak horizontal antara kotak dan teks,
+               * font: mengatur ukuran teks.
+               */
+              color: '#fff',      // Warna teks legend
+              boxWidth: 20,       // Lebar kotak warna
+              boxHeight: 20,      // Tinggi kotak warna (Chart.js v3+)
+              padding: 10,        // Jarak horizontal antara kotak warna & teks
               generateLabels: function (chart) {
-                const rawLabels = chart.data.labels; 
+                const rawLabels = chart.data.labels;
                 const bgColors = chart.data.datasets[0].backgroundColor;
-                // Pastikan menambahkan datasetIndex: 0 agar toggle berfungsi
                 return rawLabels.map((label, i) => ({
                   text: label,
                   fillStyle: bgColors[i],
                   strokeStyle: bgColors[i],
                   hidden: false,
-                  datasetIndex: 0, // <-- Penting!
-                  index: i
+                  datasetIndex: 0   // Penting agar toggle legend berfungsi
                 }));
+              },
+              font: {
+                size: 14
               }
             }
           },
           title: {
             display: true,
             text: 'Detail Tindakan',
-            color: '#fff',
+            color: '#fff',     // Warna teks judul
             font: { size: 16 }
           }
         }
