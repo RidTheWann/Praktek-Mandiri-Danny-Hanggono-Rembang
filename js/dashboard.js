@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function createChartTindakan(canvasId, labels, data) {
     const ctx = document.getElementById(canvasId).getContext('2d');
   
-    // Tentukan urutan yang diinginkan
+    // Urutan label yang diinginkan
     const desiredOrder = [
       'Obat',
       'Cabut Anak',
@@ -302,10 +302,10 @@ document.addEventListener('DOMContentLoaded', () => {
       'Lainnya'
     ];
   
-    // Filter & urutkan label sesuai desiredOrder
+    // Hanya ambil label yang ada di 'labels' lalu urutkan
     const orderedLabels = desiredOrder.filter(label => labels.includes(label));
   
-    // Buat mapping dari label ke nilai data
+    // Mapping label -> data
     const mapping = {};
     labels.forEach((label, i) => {
       mapping[label] = data[i];
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Susun data sesuai urutan label
     const orderedData = orderedLabels.map(label => mapping[label] || 0);
   
-    // Peta warna untuk tiap kategori
+    // Peta warna
     const colorMap = {
       'Obat': 'rgba(255, 99, 132, 0.7)',
       'Cabut Anak': 'rgba(54, 162, 235, 0.7)',
@@ -325,8 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'Lainnya': 'rgba(201, 203, 207, 0.7)'
     };
   
-    // Warna teks judul & legend
-    const textColor = '#fff';  // Ganti sesuai kebutuhan
+    // Warna teks yang diinginkan untuk judul chart & legend
+    const textColor = '#fff'; // Ganti sesuai kebutuhan, misalnya "#fff" untuk putih
   
     return new Chart(ctx, {
       type: 'bar',
@@ -345,17 +345,27 @@ document.addEventListener('DOMContentLoaded', () => {
       options: {
         maintainAspectRatio: false,
         scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } },
-          x: { ticks: { color: textColor } }
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              color: textColor  // Warna teks pada sumbu Y
+            }
+          },
+          x: {
+            ticks: {
+              color: textColor  // Warna teks pada sumbu X
+            }
+          }
         },
         plugins: {
           legend: {
             display: true,
             position: 'top',
             labels: {
-              color: textColor, // Warna teks legend
-              generateLabels: function (chart) {
-                // Buat item legend berdasarkan orderedLabels
+              color: textColor, // Warna teks legend item
+              generateLabels: function(chart) {
+                // Legend item berdasarkan urutan label yang diinginkan
                 return orderedLabels.map((label, i) => ({
                   text: label,
                   fillStyle: colorMap[label] || 'rgba(201,203,207,0.7)',
@@ -370,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
             display: true,
             text: 'Detail Tindakan',
             font: { size: 16 },
-            color: textColor // Warna teks judul chart
+            color: textColor  // Warna teks judul chart
           }
         }
       }
