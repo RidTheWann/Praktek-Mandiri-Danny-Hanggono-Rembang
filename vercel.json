@@ -1,9 +1,54 @@
-
-
 {
+  "version": 2,
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/LoginRegist",
+      "permanent": true
+    },
+    {
+      "source": "/index",
+      "destination": "/LoginRegist",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)\\.html",
+      "destination": "/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
-    { "source": "/get-data(.*)", "destination": "/api/get-data" },
-    { "source": "/submit-data(.*)", "destination": "/api/submit-data" },
-    { "source": "/delete-data(.*)", "destination": "/api/delete-data" }
+    {
+      "source": "/LoginRegist",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/get-data(.*)",
+      "destination": "/api/get-data"
+    },
+    {
+      "source": "/submit-data(.*)",
+      "destination": "/api/submit-data"
+    },
+    {
+      "source": "/delete-data(.*)",
+      "destination": "/api/delete-data"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/js/(.*)",
+      "destination": "/js/$1"
+    },
+    {
+      "source": "/css/(.*)",
+      "destination": "/css/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1.html"
+    }
   ]
 }
