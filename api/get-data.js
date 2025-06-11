@@ -1,7 +1,5 @@
 import { MongoClient } from 'mongodb';
 
-import { MongoClient } from 'mongodb';
-
 const mongodbUri = process.env.MONGODB_URI;
 
 if (!mongodbUri) {
