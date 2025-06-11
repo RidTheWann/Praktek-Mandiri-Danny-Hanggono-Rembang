@@ -67,9 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       let url = '/api/get-data';
       if (tanggal) url += `?tanggal=${tanggal}`;
+      console.log(`[fetchData] Mengambil data dari: ${url}`);
       const response = await fetch(url);
+      console.log(`[fetchData] Respon diterima, status: ${response.status}`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const result = await response.json();
+      console.log(`[fetchData] Data JSON berhasil di-parse.`);
       localStorage.setItem(cacheKey, JSON.stringify({
         timestamp: new Date().getTime(),
         data: result.data
