@@ -65,9 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     try {
-      let url = '/api/get-data';
-      if (tanggal) url += `?tanggal=${tanggal}`;
-      console.log(`[fetchData] Mengambil data dari: ${url}`);
+    const url = tanggal ? `/api/get-data?tanggal=${tanggal}` : `/api/get-data?month=${month}`;
+    console.log(`[fetchData] Mengambil data dari: ${url}`);
+    console.log(`[fetchData] Parameter yang dikirim - tanggal: ${tanggal}, month: ${month}`);
       const response = await fetch(url);
       console.log(`[fetchData] Respon diterima, status: ${response.status}`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

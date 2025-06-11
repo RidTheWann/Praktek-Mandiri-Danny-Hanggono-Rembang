@@ -18,6 +18,7 @@ export default async function handler(req, res) {
     console.log("Successfully connected to MongoDB.");
     const db = client.db();
     const { tanggal, month } = req.query;
+    console.log("Received query parameters - tanggal:", tanggal, ", month:", month);
     let query = {};
     if (tanggal) {
       query["Tanggal Kunjungan"] = tanggal;
