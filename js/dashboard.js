@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let chartTindakanInstance = null;
 
   // Cache in-memory: localStorage dengan durasi 10 detik
-  async function fetchData(tanggal = null) {
+  async function fetchData(tanggal = null, month = null) {
     const cacheKey = tanggal ? `data_${tanggal}` : "data_all";
     const cacheExpiry = 10000; // 10 detik
     const cached = localStorage.getItem(cacheKey);
@@ -65,7 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     try {
-    const url = tanggal ? `/api/get-data?tanggal=${tanggal}` : `/api/get-data?month=${month}`;
+    let url;
+    if (tanggal) {
+      url = `/api/get-data?tanggal=${tanggal}`;
+    } else if (month) {
+      url = `/api/get-data?month=${month}`;
+    } else {
+      url = `/api/get-data`; // Fallback if neither tanggal nor month is provided
+    }
     console.log(`[fetchData] Mengambil data dari: ${url}`);
     console.log(`[fetchData] Parameter yang dikirim - tanggal: ${tanggal}, month: ${month}`);
       const response = await fetch(url);
